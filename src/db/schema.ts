@@ -47,7 +47,6 @@ export const items = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     title: text().notNull(),
     notes: text().notNull().default(""),
-    pinned: boolean().notNull().default(false),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("items_user_idx").on(t.userId)],

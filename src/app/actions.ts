@@ -53,17 +53,6 @@ async function ownedItem(tx: Tx, uid: string, itemId: string) {
   if (!row) throw new Error("Item not found");
 }
 
-/** Pinned items leave Home once they have nothing left to do. */
-async function unpinFinished(tx: Tx, uid: string) {
-  await tx.execute(sql`
-    update items set pinned = false
-    where user_id = ${uid} and pinned
-      and not exists (
-        select 1 from item_tags it
-        where it.item_id = items.id and it.completed_at is null
-      )`);
-}
-
 // ---------- tags ----------
 
 export async function createTag(
@@ -115,7 +104,6 @@ export async function deleteTag(tagId: string) {
       delete from items
       where user_id = ${uid}
         and not exists (select 1 from item_tags it where it.item_id = items.id)`);
-    await unpinFinished(tx, uid);
   });
   refresh();
 }
@@ -125,7 +113,6 @@ export async function deleteTag(tagId: string) {
 export async function createItem(input: {
   title: string;
   tagNames: string[];
-  pinned?: boolean;
 }) {
   const uid = await userId();
   const title = input.title.trim();
@@ -135,7 +122,7 @@ export async function createItem(input: {
     const tagIds = await resolveTagIds(tx, uid, input.tagNames);
     const [item] = await tx
       .insert(items)
-      .values({ userId: uid, title, pinned: !!input.pinned })
+      .values({ userId: uid, title })
       .returning({ id: items.id });
     await tx
       .insert(itemTags)
@@ -188,15 +175,6 @@ export async function deleteItem(itemId: string) {
   refresh();
 }
 
-export async function setPinned(itemId: string, pinned: boolean) {
-  const uid = await userId();
-  await db
-    .update(items)
-    .set({ pinned })
-    .where(and(eq(items.id, itemId), eq(items.userId, uid)));
-  refresh();
-}
-
 /** Mark the given tag associations complete (kept for history, not deleted). */
 export async function completeItem(itemId: string, tagIds: string[]) {
   const uid = await userId();
@@ -213,7 +191,6 @@ export async function completeItem(itemId: string, tagIds: string[]) {
           isNull(itemTags.completedAt),
         ),
       );
-    await unpinFinished(tx, uid);
   });
   refresh();
 }

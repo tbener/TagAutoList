@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, List, Menu, Pin } from "lucide-react";
+import { ChevronRight, List, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -12,7 +12,6 @@ import { NewListButton } from "./list-forms";
 type Props = {
   tags: Tag[];
   activeSets: string[][];
-  pinnedCount: number;
   footer: ReactNode;
   children: ReactNode;
 };
@@ -21,7 +20,7 @@ type Props = {
  * Persistent two-pane layout: dynamic list tree on the left (a drawer on
  * phones), content on the right.
  */
-export function AppShell({ tags, activeSets, pinnedCount, footer, children }: Props) {
+export function AppShell({ tags, activeSets, footer, children }: Props) {
   const [drawer, setDrawer] = useState(false);
   const pathname = usePathname();
   const search = useSearchParams();
@@ -33,10 +32,8 @@ export function AppShell({ tags, activeSets, pinnedCount, footer, children }: Pr
     <Sidebar
       tags={tags}
       activeSets={activeSets}
-      pinnedCount={pinnedCount}
       footer={footer}
       path={pathname === "/browse" ? search.getAll("t") : []}
-      onHome={pathname === "/"}
     />
   );
 
@@ -56,9 +53,9 @@ export function AppShell({ tags, activeSets, pinnedCount, footer, children }: Pr
           >
             <Menu size={20} />
           </button>
-          <span className="font-semibold tracking-tight">
+          <Link href="/" className="font-semibold tracking-tight">
             Tag<span className="text-accent">Auto</span>List
-          </span>
+          </Link>
         </header>
         <main className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
@@ -82,11 +79,9 @@ export function AppShell({ tags, activeSets, pinnedCount, footer, children }: Pr
 function Sidebar({
   tags,
   activeSets,
-  pinnedCount,
   footer,
   path,
-  onHome,
-}: Omit<Props, "children"> & { path: string[]; onHome: boolean }) {
+}: Omit<Props, "children"> & { path: string[] }) {
   const roots = useMemo(() => sidebarModel(tags, activeSets, path), [tags, activeSets, path.join(",")]);
 
   return (
@@ -96,10 +91,6 @@ function Sidebar({
       </Link>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
-        <Row href="/" selected={onHome} icon={<Pin size={18} />} count={pinnedCount}>
-          Pinned
-        </Row>
-        <div className="mx-3 my-2 border-t border-border" />
         {roots.length === 0 && (
           <p className="px-3 py-2 text-sm text-muted">No lists yet.</p>
         )}

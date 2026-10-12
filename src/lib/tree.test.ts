@@ -4,17 +4,15 @@ import {
   browse,
   sidebarModel,
   history,
-  pinnedItems,
   type Snapshot,
 } from "./tree";
 
 const d = (n: number) => new Date(2026, 0, n);
 const tag = (id: string, name: string, isList = false) => ({ id, name, isList });
-const item = (id: string, title: string, pinned = false, day = 1) => ({
+const item = (id: string, title: string, day = 1) => ({
   id,
   title,
   notes: "",
-  pinned,
   createdAt: d(day),
 });
 
@@ -26,9 +24,9 @@ const base = (): Snapshot => ({
     tag("k2", "Kid Two"),
   ],
   items: [
-    item("chair", "Chair", false, 1),
-    item("table", "Table", false, 2),
-    item("lesson", "Education Lesson", false, 3),
+    item("chair", "Chair", 1),
+    item("table", "Table", 2),
+    item("lesson", "Education Lesson", 3),
   ],
   links: [
     { itemId: "chair", tagId: "shop", completedAt: null },
@@ -77,16 +75,6 @@ describe("browse", () => {
     snap.links[0].completedAt = d(5);
     snap.links[1].completedAt = d(5);
     expect(browse(snap, ["shop"]).items.map((i) => i.id)).toEqual(["table"]);
-  });
-});
-
-describe("home", () => {
-  it("pinned items disappear when fully completed", () => {
-    const snap = base();
-    snap.items[2].pinned = true;
-    expect(pinnedItems(snap).map((i) => i.id)).toEqual(["lesson"]);
-    snap.links[4].completedAt = d(9);
-    expect(pinnedItems(snap)).toEqual([]);
   });
 });
 

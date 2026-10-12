@@ -14,7 +14,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShellBoundary
       tags={snap.tags}
       activeSets={items.map((i) => i.tags.map((t) => t.id))}
-      pinnedCount={items.filter((i) => i.pinned).length}
       footer={
         <form
           action={async () => {

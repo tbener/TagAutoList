@@ -9,7 +9,6 @@ export type Item = {
   id: string;
   title: string;
   notes: string;
-  pinned: boolean;
   createdAt: Date;
 };
 export type Link = { itemId: string; tagId: string; completedAt: Date | null };
@@ -65,11 +64,6 @@ export function browse(snap: Snapshot, path: string[]) {
   }
   const subTags = [...counts.values()].sort((a, b) => byName(a.tag, b.tag));
   return { items, subTags };
-}
-
-/** Pinned items that are still active, newest first. */
-export function pinnedItems(snap: Snapshot): ItemView[] {
-  return activeItems(snap).filter((i) => i.pinned).sort(newestFirst);
 }
 
 /** Every tag (flat) with active/completed association counts. */

@@ -22,7 +22,6 @@ export const getSnapshot = cache(async function getSnapshot(
         id: items.id,
         title: items.title,
         notes: items.notes,
-        pinned: items.pinned,
         createdAt: items.createdAt,
       })
       .from(items)

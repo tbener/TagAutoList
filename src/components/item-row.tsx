@@ -1,9 +1,9 @@
 "use client";
 
-import { Check, Pencil, Pin, Trash2 } from "lucide-react";
+import { Check, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { completeItem, deleteItem, setPinned, updateItem } from "@/app/actions";
+import { completeItem, deleteItem, updateItem } from "@/app/actions";
 import { cn } from "@/lib/utils";
 import { TagPicker, type PickerTag } from "./tag-picker";
 import { Button, Input, Modal } from "./ui";
@@ -12,7 +12,6 @@ export type RowItem = {
   id: string;
   title: string;
   notes: string;
-  pinned: boolean;
   tags: PickerTag[]; // active tags only
 };
 
@@ -70,18 +69,6 @@ export function ItemRow({
       </div>
 
       <div className="flex shrink-0 items-center">
-        <button
-          type="button"
-          aria-label={item.pinned ? "Unpin from Home" : "Pin to Home"}
-          aria-pressed={item.pinned}
-          onClick={() => start(() => setPinned(item.id, !item.pinned))}
-          className={cn(
-            "rounded-md p-2 hover:bg-accent-soft",
-            item.pinned ? "text-accent" : "text-muted",
-          )}
-        >
-          <Pin size={16} className={cn(item.pinned && "fill-current")} />
-        </button>
         <button
           type="button"
           aria-label="Edit"
