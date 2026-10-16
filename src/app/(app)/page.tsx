@@ -11,31 +11,41 @@ export default async function HomePage() {
 
   return (
     <>
-      <h1 className="text-3xl font-semibold text-accent">Lists</h1>
+      {/* Desktop: the sidebar already lists everything, so don't repeat it. */}
+      <p className="hidden rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted md:block">
+        {rows.length === 0
+          ? "Create your first list from the sidebar to get started."
+          : "Select a list from the sidebar."}
+      </p>
 
-      {rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted">
-          No lists yet. Create your first one below.
-        </p>
-      ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-          {rows.map(({ tag, active }) => (
-            <li key={tag.id}>
-              <Link
-                href={browseHref([tag.id])}
-                className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent-soft"
-              >
-                <List size={18} className="shrink-0 text-muted" />
-                <span className="min-w-0 flex-1 truncate font-medium">{tag.name}</span>
-                {active > 0 && <span className="text-sm text-muted">{active}</span>}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Phone: the sidebar is a drawer, so the lists live here. */}
+      <div className="space-y-6 md:hidden">
+        <h1 className="text-3xl font-semibold text-accent">Lists</h1>
 
-      <div className="rounded-xl border border-border bg-card p-1">
-        <NewListButton />
+        {rows.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted">
+            No lists yet. Create your first one below.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+            {rows.map(({ tag, active }) => (
+              <li key={tag.id}>
+                <Link
+                  href={browseHref([tag.id])}
+                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent-soft"
+                >
+                  <List size={18} className="shrink-0 text-muted" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{tag.name}</span>
+                  {active > 0 && <span className="text-sm text-muted">{active}</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="rounded-xl border border-border bg-card p-1">
+          <NewListButton />
+        </div>
       </div>
     </>
   );

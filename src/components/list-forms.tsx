@@ -37,7 +37,7 @@ export function NewListButton() {
               else {
                 setName("");
                 setOpen(false);
-                router.push(browseHref([res.id]));
+                router.push(`${browseHref([res.id])}&focus=1`);
               }
             });
           }}

@@ -12,10 +12,10 @@ import { browse, browseHref } from "@/lib/tree";
 export default async function BrowsePage({
   searchParams,
 }: {
-  searchParams: Promise<{ t?: string | string[] }>;
+  searchParams: Promise<{ t?: string | string[]; focus?: string }>;
 }) {
   const user = await requireUser();
-  const { t } = await searchParams;
+  const { t, focus } = await searchParams;
   const snap = await getSnapshot(user.id);
 
   const byId = new Map(snap.tags.map((tag) => [tag.id, tag]));
@@ -51,7 +51,11 @@ export default async function BrowsePage({
         </div>
       </div>
 
-      <AddItemForm key={path.join(",")} listNames={current.map((c) => c.name)} />
+      <AddItemForm
+        key={path.join(",")}
+        listNames={current.map((c) => c.name)}
+        autoFocus={focus === "1"} // set right after creating a list
+      />
 
       {items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted">
