@@ -1,6 +1,8 @@
+"use client";
+
 import { Plus, X } from "lucide-react";
-import Link from "next/link";
 import { browseHref, type SubTag, type Tag } from "@/lib/tree";
+import { NavLink } from "./nav-link";
 
 /**
  * Mobile-only (the sidebar covers this on desktop): the tags currently
@@ -16,18 +18,18 @@ export function FilterBar({
   const path = selected.map((t) => t.id);
 
   return (
-    <div className="space-y-2 md:hidden">
+    <div className="space-y-2.5 md:hidden">
       <ul className="flex flex-wrap gap-2">
         {selected.map((tag) => (
           <li key={tag.id}>
-            <Link
+            <NavLink
               href={path.length > 1 ? browseHref(path.filter((id) => id !== tag.id)) : "/"}
               aria-label={`Remove ${tag.name}`}
-              className="flex items-center gap-1 rounded-full bg-accent py-1.5 pl-3 pr-2 text-sm font-medium text-accent-fg"
+              className="flex items-center gap-1.5 rounded-full bg-accent py-2 pl-4 pr-3 text-[0.95rem] font-medium text-accent-fg shadow-sm"
             >
               {tag.name}
-              <X size={14} />
-            </Link>
+              <X size={16} />
+            </NavLink>
           </li>
         ))}
       </ul>
@@ -37,14 +39,14 @@ export function FilterBar({
           <ul className="flex w-max gap-2">
             {suggestions.map(({ tag, count }) => (
               <li key={tag.id}>
-                <Link
+                <NavLink
                   href={browseHref([...path, tag.id])}
-                  className="flex items-center gap-1 rounded-full border border-dashed border-accent/60 bg-accent-soft py-1.5 pl-2.5 pr-3 text-sm font-medium text-accent"
+                  className="flex items-center gap-1.5 rounded-full border border-dashed border-accent/60 bg-accent-soft py-2 pl-3 pr-4 text-[0.95rem] font-medium text-accent"
                 >
-                  <Plus size={14} />
+                  <Plus size={16} />
                   {tag.name}
                   <span className="text-xs opacity-70">{count}</span>
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>

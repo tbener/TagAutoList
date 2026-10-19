@@ -21,8 +21,8 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
-        size === "md" ? "h-10 px-4 text-sm" : "h-8 px-3 text-xs",
+        "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-colors active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+        size === "md" ? "h-11 px-5 text-sm md:h-10 md:px-4" : "h-9 px-3.5 text-xs md:h-8 md:px-3",
         variant === "primary" && "bg-accent text-accent-fg hover:opacity-90",
         variant === "outline" && "border border-border hover:bg-accent-soft",
         variant === "ghost" && "hover:bg-accent-soft",
@@ -38,7 +38,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25",
+        "h-12 w-full rounded-xl border border-border bg-card px-3.5 text-base outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25 md:h-10 md:px-3 md:text-sm",
         className,
       )}
       {...props}

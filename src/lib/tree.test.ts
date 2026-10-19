@@ -107,6 +107,23 @@ describe("sidebarModel", () => {
     expect(kid.children).toEqual([]);
   });
 
+  it("flags expandable nodes without opening them, and honours the expanded set", () => {
+    const s = base();
+    const roots = sidebarModel(s.tags, sets(s), []);
+    const shop = roots.find((r) => r.tag.id === "shop")!;
+    const kid1 = roots.find((r) => r.tag.id === "k1")!;
+    const kid2 = roots.find((r) => r.tag.id === "k2")!;
+    expect(shop.expandable).toBe(true);
+    expect(shop.children).toEqual([]); // closed
+    expect(kid1.expandable).toBe(true); // Shopping covers only part of Kid One
+    expect(kid2.expandable).toBe(false); // Shopping covers all of Kid Two → hidden
+    const opened = sidebarModel(s.tags, sets(s), [], new Set(["shop"]));
+    const shopOpen = opened.find((r) => r.tag.id === "shop")!;
+    expect(shopOpen.children.map((c) => c.tag.name)).toEqual(["Kid One", "Kid Two"]);
+    // second level is known to be expandable-or-not before it is opened
+    expect(shopOpen.children.every((c) => c.expandable === false)).toBe(true);
+  });
+
   it("hides a sub-tag that covers every item of its parent", () => {
     const s = base();
     // Kid One: Chair + Lesson. Make Shopping cover both (add Lesson to Shopping).

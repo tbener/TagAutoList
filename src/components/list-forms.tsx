@@ -1,45 +1,41 @@
 "use client";
 
 import { History, Pencil, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { createTag, deleteTag, renameTag } from "@/app/actions";
-import { browseHref } from "@/lib/tree";
+import { useState } from "react";
+import { NavLink, navigate } from "./nav-link";
+import { useData } from "./store";
 import { Button, Input, Modal } from "./ui";
 
-/** Sidebar "New list" — creates the list, then opens it. */
+/** Sidebar "New list" — creates the list, then opens it ready for adding tasks. */
 export function NewListButton() {
-  const router = useRouter();
+  const data = useData();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const [pending, start] = useTransition();
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-accent hover:bg-accent-soft"
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[0.95rem] font-medium text-accent hover:bg-accent-soft"
       >
-        <Plus size={18} /> New list
+        <Plus size={20} /> New list
       </button>
       <Modal open={open} onOpenChange={setOpen} title="New list">
         <form
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
+            const res = data.addTag(name);
+            if (res.error || !res.id) {
+              setError(res.error ?? "Could not create list");
+              return;
+            }
+            setName("");
             setError("");
-            start(async () => {
-              const res = await createTag(name, true);
-              if (res.error || !res.id) setError(res.error ?? "Could not create list");
-              else {
-                setName("");
-                setOpen(false);
-                router.push(`${browseHref([res.id])}&focus=1`);
-              }
-            });
+            setOpen(false);
+            navigate(`/browse?t=${res.id}&focus=1`);
           }}
         >
           <Input
@@ -54,7 +50,7 @@ export function NewListButton() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending || !name.trim()}>
+            <Button type="submit" disabled={!name.trim()}>
               Create
             </Button>
           </div>
@@ -66,20 +62,24 @@ export function NewListButton() {
 
 /** History / rename / delete for the list being viewed. */
 export function ListActions({ list }: { list: { id: string; name: string } }) {
-  const router = useRouter();
+  const data = useData();
   const [renaming, setRenaming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [name, setName] = useState(list.name);
   const [error, setError] = useState("");
-  const [pending, start] = useTransition();
 
-  const iconBtn = "rounded-md p-2 text-muted hover:bg-accent-soft hover:text-fg";
+  const iconBtn = "rounded-xl p-2.5 text-muted hover:bg-accent-soft hover:text-fg";
 
   return (
-    <div className="flex items-center">
-      <Link href={`/history?tag=${list.id}`} aria-label="Completed history" title="History" className={iconBtn}>
-        <History size={18} />
-      </Link>
+    <div className="flex shrink-0 items-center">
+      <NavLink
+        href={`/history?tag=${list.id}`}
+        aria-label="Completed history"
+        title="History"
+        className={iconBtn}
+      >
+        <History size={20} />
+      </NavLink>
       <button
         type="button"
         aria-label="Rename list"
@@ -91,7 +91,7 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
           setRenaming(true);
         }}
       >
-        <Pencil size={18} />
+        <Pencil size={20} />
       </button>
       <button
         type="button"
@@ -100,7 +100,7 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
         className={`${iconBtn} hover:text-danger`}
         onClick={() => setDeleting(true)}
       >
-        <Trash2 size={18} />
+        <Trash2 size={20} />
       </button>
 
       <Modal open={renaming} onOpenChange={setRenaming} title="Rename list">
@@ -108,11 +108,9 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
-            start(async () => {
-              const res = await renameTag(list.id, name);
-              if (res.error) setError(res.error);
-              else setRenaming(false);
-            });
+            const res = data.renameTag(list.id, name);
+            if (res.error) setError(res.error);
+            else setRenaming(false);
           }}
         >
           <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} aria-label="List name" />
@@ -121,7 +119,7 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
             <Button variant="outline" onClick={() => setRenaming(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending || !name.trim()}>
+            <Button type="submit" disabled={!name.trim()}>
               Save
             </Button>
           </div>
@@ -140,14 +138,11 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
           </Button>
           <Button
             variant="danger"
-            disabled={pending}
-            onClick={() =>
-              start(async () => {
-                await deleteTag(list.id);
-                setDeleting(false);
-                router.push("/");
-              })
-            }
+            onClick={() => {
+              setDeleting(false);
+              navigate("/");
+              data.deleteTag(list.id);
+            }}
           >
             Delete list
           </Button>

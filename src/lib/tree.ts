@@ -106,18 +106,29 @@ export type TreeNode = {
   /** Active items under this node's full path (intersection). */
   count: number;
   selected: boolean;
+  /** Has sub-branches (shown as an expand chevron), whether or not open. */
+  expandable: boolean;
+  /** Only populated while the node is expanded. */
   children: TreeNode[];
 };
 
+export const nodeKey = (nodePath: string[]) => nodePath.join(">");
+
+/** Keys of every node on `path` (each prefix) — what should be open to show it. */
+export const pathKeys = (path: string[]) =>
+  new Set(path.map((_, i) => nodeKey(path.slice(0, i + 1))));
+
 /**
- * Sidebar tree. Roots are all tags. Only nodes on the current path are expanded; the
- * children of an expanded node are the tags co-occurring with its whole path.
- * `activeSets` holds, per active item, the ids of its active tags.
+ * Sidebar tree. Roots are all tags; the children of a node are the tags
+ * co-occurring with its whole path. `expanded` holds the keys of the open
+ * nodes (default: just the current path). `activeSets` holds, per active item,
+ * the ids of its active tags.
  */
 export function sidebarModel(
   tags: Tag[],
   activeSets: string[][],
   path: string[],
+  expanded: Set<string> = pathKeys(path),
 ): TreeNode[] {
   const byId = new Map(tags.map((t) => [t.id, t]));
   const matching = (ids: string[]) =>
@@ -126,26 +137,25 @@ export function sidebarModel(
   const build = (nodePath: string[]): TreeNode => {
     const sets = matching(nodePath);
     const onPath = nodePath.every((id, i) => path[i] === id);
-    let children: TreeNode[] = [];
-    if (onPath) {
-      const co = new Map<string, number>();
-      for (const s of sets)
-        for (const id of s) if (!nodePath.includes(id)) co.set(id, (co.get(id) ?? 0) + 1);
-      // A child covering every item of its parent narrows nothing, so it isn't
-      // shown as a sub-branch (unless the current path goes through it).
-      children = [...co]
-        .filter(([id, n]) => n < sets.length || path[nodePath.length] === id)
-        .map(([id]) => byId.get(id))
-        .filter((t): t is Tag => !!t)
-        .sort(byName)
-        .map((t) => build([...nodePath, t.id]));
-    }
+    const co = new Map<string, number>();
+    for (const s of sets)
+      for (const id of s) if (!nodePath.includes(id)) co.set(id, (co.get(id) ?? 0) + 1);
+    // A child covering every item of its parent narrows nothing, so it isn't
+    // shown as a sub-branch (unless the current path goes through it).
+    const subTags = [...co]
+      .filter(([id, n]) => n < sets.length || (onPath && path[nodePath.length] === id))
+      .map(([id]) => byId.get(id))
+      .filter((t): t is Tag => !!t)
+      .sort(byName);
     return {
       tag: byId.get(nodePath[nodePath.length - 1])!,
       path: nodePath,
       count: sets.length,
       selected: onPath && nodePath.length === path.length,
-      children,
+      expandable: subTags.length > 0,
+      children: expanded.has(nodeKey(nodePath))
+        ? subTags.map((t) => build([...nodePath, t.id]))
+        : [],
     };
   };
 

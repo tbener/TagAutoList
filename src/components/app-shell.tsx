@@ -1,41 +1,32 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, List, Menu } from "lucide-react";
-import Link from "next/link";
+import { ChevronRight, Menu } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { browseHref, sidebarModel, type Tag, type TreeNode } from "@/lib/tree";
+import { activeItems, browseHref, nodeKey, pathKeys, sidebarModel, type TreeNode } from "@/lib/tree";
 import { NewListButton } from "./list-forms";
-
-type Props = {
-  tags: Tag[];
-  activeSets: string[][];
-  footer: ReactNode;
-  children: ReactNode;
-};
+import { NavLink } from "./nav-link";
+import { useData } from "./store";
 
 /**
- * Persistent two-pane layout: dynamic list tree on the left (a drawer on
+ * Persistent two-pane layout: dynamic tag tree on the left (a drawer on
  * phones), content on the right.
  */
-export function AppShell({ tags, activeSets, footer, children }: Props) {
+export function AppShell({ footer, children }: { footer: ReactNode; children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
+  const { pending, notice } = useData();
   const pathname = usePathname();
   const search = useSearchParams();
+
+  const pathStr = pathname === "/browse" ? search.getAll("t").join(",") : "";
+  const path = useMemo(() => (pathStr ? pathStr.split(",") : []), [pathStr]);
 
   // Close the drawer after navigating.
   useEffect(() => setDrawer(false), [pathname, search]);
 
-  const sidebar = (
-    <Sidebar
-      tags={tags}
-      activeSets={activeSets}
-      footer={footer}
-      path={pathname === "/browse" ? search.getAll("t") : []}
-    />
-  );
+  const sidebar = <Sidebar footer={footer} path={path} />;
 
   return (
     <div className="flex min-h-dvh">
@@ -49,23 +40,36 @@ export function AppShell({ tags, activeSets, footer, children }: Props) {
             type="button"
             aria-label="Open lists"
             onClick={() => setDrawer(true)}
-            className="rounded-md p-2 hover:bg-accent-soft"
+            className="rounded-xl p-2.5 hover:bg-accent-soft"
           >
-            <Menu size={20} />
+            <Menu size={22} />
           </button>
-          <Link href="/" className="font-semibold tracking-tight">
+          <NavLink href="/" className="text-lg font-semibold tracking-tight">
             Tag<span className="text-accent">Auto</span>List
-          </Link>
+          </NavLink>
+          {pending > 0 && <span className="ml-auto pr-2 text-xs text-muted">Saving…</span>}
         </header>
-        <main className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-8">{children}</main>
+        {/* Extra bottom padding on phones keeps the last item clear of the fixed add-task bar. */}
+        <main className="mx-auto max-w-3xl space-y-6 px-4 pb-32 pt-6 md:px-8 md:py-8">
+          {children}
+        </main>
       </div>
+
+      {notice && (
+        <div
+          role="status"
+          className="fixed inset-x-3 top-3 z-50 mx-auto max-w-md rounded-xl bg-danger px-4 py-3 text-sm font-medium text-white shadow-lg"
+        >
+          {notice}
+        </div>
+      )}
 
       <Dialog.Root open={drawer} onOpenChange={setDrawer}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 md:hidden" />
           <Dialog.Content
             aria-describedby={undefined}
-            className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-xs bg-card shadow-xl outline-none md:hidden"
+            className="fixed inset-y-0 left-0 z-50 w-[88vw] max-w-sm bg-card shadow-xl outline-none md:hidden"
           >
             <Dialog.Title className="sr-only">Lists</Dialog.Title>
             {sidebar}
@@ -76,30 +80,49 @@ export function AppShell({ tags, activeSets, footer, children }: Props) {
   );
 }
 
-function Sidebar({
-  tags,
-  activeSets,
-  footer,
-  path,
-}: Omit<Props, "children"> & { path: string[] }) {
-  const roots = useMemo(() => sidebarModel(tags, activeSets, path), [tags, activeSets, path.join(",")]);
+function Sidebar({ footer, path }: { footer: ReactNode; path: string[] }) {
+  const { snap } = useData();
+  const pathKey = path.join(",");
+
+  const activeSets = useMemo(
+    () => activeItems(snap).map((i) => i.tags.map((t) => t.id)),
+    [snap],
+  );
+
+  // Which nodes are open. Selecting something always opens the way to it.
+  const [expanded, setExpanded] = useState<Set<string>>(() => pathKeys(path));
+  useEffect(() => {
+    setExpanded((prev) => new Set([...prev, ...pathKeys(path)]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathKey]);
+
+  const toggle = (key: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+
+  const roots = useMemo(
+    () => sidebarModel(snap.tags, activeSets, path, expanded),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [snap.tags, activeSets, pathKey, expanded],
+  );
 
   return (
     <div className="flex h-full flex-col">
-      <Link href="/" className="px-5 pb-3 pt-5 text-lg font-semibold tracking-tight">
+      <NavLink href="/" className="px-5 pb-3 pt-5 text-xl font-semibold tracking-tight">
         Tag<span className="text-accent">Auto</span>List
-      </Link>
+      </NavLink>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
-        {roots.length === 0 && (
-          <p className="px-3 py-2 text-sm text-muted">No lists yet.</p>
-        )}
+        {roots.length === 0 && <p className="px-3 py-2 text-sm text-muted">No lists yet.</p>}
         {roots.map((node) => (
-          <TreeItem key={node.tag.id} node={node} depth={0} />
+          <TreeItem key={node.tag.id} node={node} expanded={expanded} onToggle={toggle} />
         ))}
       </nav>
 
-      <div className="space-y-1 border-t border-border p-2">
+      <div className="space-y-1 border-t border-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <NewListButton />
         {footer}
       </div>
@@ -107,69 +130,56 @@ function Sidebar({
   );
 }
 
-function TreeItem({ node, depth }: { node: TreeNode; depth: number }) {
-  const expanded = node.children.length > 0;
+function TreeItem({
+  node,
+  expanded,
+  onToggle,
+}: {
+  node: TreeNode;
+  expanded: Set<string>;
+  onToggle: (key: string) => void;
+}) {
+  const key = nodeKey(node.path);
+  const open = expanded.has(key);
   return (
     <div>
-      <Row
-        href={browseHref(node.path)}
-        selected={node.selected}
-        icon={
-          expanded ? <ChevronRight size={18} className="rotate-90" /> : <List size={18} />
-        }
-        count={node.count}
-        depth={depth}
+      <div
+        className={cn(
+          "flex items-center rounded-xl hover:bg-accent-soft",
+          node.selected && "bg-accent-soft text-accent",
+        )}
       >
-        {node.tag.name}
-      </Row>
-      {expanded && (
+        <button
+          type="button"
+          aria-label={open ? `Collapse ${node.tag.name}` : `Expand ${node.tag.name}`}
+          aria-expanded={node.expandable ? open : undefined}
+          disabled={!node.expandable}
+          onClick={() => onToggle(key)}
+          className="grid size-10 shrink-0 place-items-center text-muted disabled:pointer-events-none"
+        >
+          {node.expandable && (
+            <ChevronRight size={18} className={cn("transition-transform", open && "rotate-90")} />
+          )}
+        </button>
+        <NavLink
+          href={browseHref(node.path)}
+          aria-current={node.selected ? "page" : undefined}
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-2 py-2.5 pr-3 text-[0.95rem]",
+            node.selected && "font-semibold",
+          )}
+        >
+          <span className="min-w-0 flex-1 truncate">{node.tag.name}</span>
+          {node.count > 0 && <span className="text-xs text-muted">{node.count}</span>}
+        </NavLink>
+      </div>
+      {open && node.children.length > 0 && (
         <div className="ml-5 border-l border-border pl-1">
           {node.children.map((c) => (
-            <TreeItem key={c.tag.id} node={c} depth={depth + 1} />
+            <TreeItem key={c.tag.id} node={c} expanded={expanded} onToggle={onToggle} />
           ))}
         </div>
       )}
     </div>
-  );
-}
-
-function Row({
-  href,
-  selected,
-  icon,
-  count,
-  children,
-  depth = 0,
-}: {
-  href: string;
-  selected: boolean;
-  icon: ReactNode;
-  count: number;
-  children: ReactNode;
-  depth?: number;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={selected ? "page" : undefined}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent-soft",
-        selected && "bg-accent-soft font-semibold text-accent",
-        depth > 0 && "py-1.5",
-      )}
-    >
-      <span className={cn("shrink-0", !selected && "text-muted")}>{icon}</span>
-      <span className="min-w-0 flex-1 truncate">{children}</span>
-      {count > 0 && <span className="text-xs text-muted">{count}</span>}
-    </Link>
-  );
-}
-
-/** Wrapper needed because the shell reads search params on the client. */
-export function AppShellBoundary(props: Props) {
-  return (
-    <Suspense fallback={null}>
-      <AppShell {...props} />
-    </Suspense>
   );
 }

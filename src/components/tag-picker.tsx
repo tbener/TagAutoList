@@ -45,7 +45,7 @@ export function TagPicker({
 
   return (
     <div className="relative">
-      <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25">
+      <div className="flex min-h-12 flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 py-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25 md:min-h-10">
         {value.map((name) => (
           <span
             key={name}
@@ -65,7 +65,7 @@ export function TagPicker({
         <input
           value={query}
           placeholder={value.length ? "" : placeholder}
-          className="min-w-24 flex-1 bg-transparent py-1 text-sm outline-none placeholder:text-muted"
+          className="min-w-24 flex-1 bg-transparent py-1.5 text-base outline-none placeholder:text-muted md:py-1 md:text-sm"
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
