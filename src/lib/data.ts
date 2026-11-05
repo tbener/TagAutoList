@@ -14,7 +14,7 @@ export const getSnapshot = cache(async function getSnapshot(
 ): Promise<Snapshot> {
   const [tagRows, itemRows] = await Promise.all([
     db
-      .select({ id: tags.id, name: tags.name, isList: tags.isList })
+      .select({ id: tags.id, name: tags.name, position: tags.position })
       .from(tags)
       .where(eq(tags.userId, userId)),
     db

@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { activeItems, browseHref, nodeKey, pathKeys, sidebarModel, type TreeNode } from "@/lib/tree";
+import { AppDnd, SortableLists, SortableRow } from "./dnd";
 import { NewListButton } from "./list-forms";
 import { NavLink } from "./nav-link";
 import { useData } from "./store";
@@ -26,12 +27,11 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
   // Close the drawer after navigating.
   useEffect(() => setDrawer(false), [pathname, search]);
 
-  const sidebar = <Sidebar footer={footer} path={path} />;
-
   return (
+    <AppDnd>
     <div className="flex min-h-dvh">
       <aside className="sticky top-0 hidden h-dvh w-72 shrink-0 border-r border-border bg-card md:block">
-        {sidebar}
+        <Sidebar area="desk" footer={footer} path={path} />
       </aside>
 
       <div className="min-w-0 flex-1">
@@ -72,15 +72,28 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
             className="fixed inset-y-0 left-0 z-50 w-[88vw] max-w-sm bg-card shadow-xl outline-none md:hidden"
           >
             <Dialog.Title className="sr-only">Lists</Dialog.Title>
-            {sidebar}
+            <Sidebar area="drawer" footer={footer} path={path} />
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
     </div>
+    </AppDnd>
   );
 }
 
-function Sidebar({ footer, path }: { footer: ReactNode; path: string[] }) {
+/**
+ * `area` keeps the desktop sidebar and the phone drawer (both can be mounted)
+ * apart for drag-and-drop. Desktop drags the whole row; the drawer uses a grip.
+ */
+function Sidebar({
+  area,
+  footer,
+  path,
+}: {
+  area: "desk" | "drawer";
+  footer: ReactNode;
+  path: string[];
+}) {
   const { snap } = useData();
   const pathKey = path.join(",");
 
@@ -117,9 +130,21 @@ function Sidebar({ footer, path }: { footer: ReactNode; path: string[] }) {
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
         {roots.length === 0 && <p className="px-3 py-2 text-sm text-muted">No lists yet.</p>}
-        {roots.map((node) => (
-          <TreeItem key={node.tag.id} node={node} expanded={expanded} onToggle={toggle} />
-        ))}
+        <SortableLists area={area} ids={roots.map((r) => r.tag.id)}>
+          {roots.map((node) => (
+            <SortableRow
+              key={node.tag.id}
+              area={area}
+              tagId={node.tag.id}
+              name={node.tag.name}
+              rowDrag={area === "desk"}
+            >
+              {(grip) => (
+                <TreeItem node={node} expanded={expanded} onToggle={toggle} grip={grip} />
+              )}
+            </SortableRow>
+          ))}
+        </SortableLists>
       </nav>
 
       <div className="space-y-1 border-t border-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
@@ -134,10 +159,13 @@ function TreeItem({
   node,
   expanded,
   onToggle,
+  grip,
 }: {
   node: TreeNode;
   expanded: Set<string>;
   onToggle: (key: string) => void;
+  /** Reorder handle — only root-level lists get one. */
+  grip?: ReactNode;
 }) {
   const key = nodeKey(node.path);
   const open = expanded.has(key);
@@ -172,6 +200,7 @@ function TreeItem({
           <span className="min-w-0 flex-1 truncate">{node.tag.name}</span>
           {node.count > 0 && <span className="text-xs text-muted">{node.count}</span>}
         </NavLink>
+        {grip}
       </div>
       {open && node.children.length > 0 && (
         <div className="ml-5 border-l border-border pl-1">

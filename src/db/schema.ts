@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
-  boolean,
   index,
+  integer,
   pgTable,
   primaryKey,
   text,
@@ -20,9 +20,9 @@ export const users = pgTable("users", {
 });
 
 /**
- * The single entity behind lists *and* ad hoc tags. `isList` only controls
- * whether the tag is promoted to the Home screen. Tags store no relationship
- * to each other — structure is derived from items (see lib/tree.ts).
+ * The single entity behind every list/tag. `position` is the user's manual
+ * order (lower = higher up; new tags go to the top; ties fall back to name). Tags store no
+ * relationship to each other — structure is derived from items (see lib/tree.ts).
  */
 export const tags = pgTable(
   "tags",
@@ -32,7 +32,7 @@ export const tags = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: text().notNull(),
-    isList: boolean().notNull().default(false),
+    position: integer().notNull().default(0),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("tags_user_name_idx").on(t.userId, sql`lower(${t.name})`)],

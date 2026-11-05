@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, type Tx } from "@/db";
 import { itemTags, items, tags } from "@/db/schema";
@@ -38,6 +38,15 @@ function cleanRefs(refs: TagRef[]) {
   return out;
 }
 
+/** New tags go above every existing one (mirrors `withNewTagOnTop` in lib/ops.ts). */
+async function topPosition(tx: Tx | typeof db, uid: string) {
+  const [row] = await tx
+    .select({ min: sql<number | null>`min(${tags.position})` })
+    .from(tags)
+    .where(eq(tags.userId, uid));
+  return row?.min == null ? 0 : Number(row.min) - 1;
+}
+
 /** Find tags by name (case-insensitive), creating unknown ones with the client's ids. */
 async function resolveTagIds(tx: Tx, uid: string, refs: TagRef[]) {
   const ids: string[] = [];
@@ -54,12 +63,15 @@ async function resolveTagIds(tx: Tx, uid: string, refs: TagRef[]) {
     if (!row) {
       await tx
         .insert(tags)
-        .values({ ...idField(ref.id), userId: uid, name: ref.name, isList: true })
+        .values({ ...idField(ref.id), userId: uid, name: ref.name, position: await topPosition(tx, uid) })
         .onConflictDoNothing();
       row = await find();
       if (!row) {
         // The client's id was taken (never expected) — let the DB pick one.
-        await tx.insert(tags).values({ userId: uid, name: ref.name, isList: true }).onConflictDoNothing();
+        await tx
+          .insert(tags)
+          .values({ userId: uid, name: ref.name, position: await topPosition(tx, uid) })
+          .onConflictDoNothing();
         row = await find();
       }
     }
@@ -90,7 +102,7 @@ export async function createTag(id: string, name: string): Promise<Result> {
   if (!clean) return { error: "Name is required" };
   const inserted = await db
     .insert(tags)
-    .values({ ...idField(id), userId: uid, name: clean, isList: true })
+    .values({ ...idField(id), userId: uid, name: clean, position: await topPosition(db, uid) })
     .onConflictDoNothing()
     .returning({ id: tags.id });
   if (!inserted.length) return { error: `"${clean}" already exists` };
@@ -110,6 +122,38 @@ export async function renameTag(tagId: string, name: string): Promise<Result> {
     return { error: `"${clean}" already exists` };
   }
   return {};
+}
+
+/**
+ * Persist a manual order: `orderedIds` top to bottom. Tags the client didn't
+ * know about keep their relative order below the listed ones (and trigger a resync).
+ */
+export async function reorderTags(orderedIds: string[]): Promise<Result> {
+  const uid = await userId();
+  let resync = false;
+  await db.transaction(async (tx) => {
+    const mine = await tx
+      .select({ id: tags.id })
+      .from(tags)
+      .where(eq(tags.userId, uid))
+      .orderBy(asc(tags.position), asc(tags.name));
+    const known = new Set(mine.map((t) => t.id));
+    const first = [...new Set(orderedIds)].filter((id) => known.has(id));
+    const listed = new Set(first);
+    const rest = mine.map((t) => t.id).filter((id) => !listed.has(id));
+    resync = rest.length > 0;
+    const order = [...first, ...rest];
+    if (!order.length) return;
+    const values = sql.join(
+      order.map((id, i) => sql`(${id}::uuid, ${i}::integer)`),
+      sql`, `,
+    );
+    await tx.execute(sql`
+      update tags set position = v.pos
+      from (values ${values}) as v(id, pos)
+      where tags.id = v.id and tags.user_id = ${uid}`);
+  });
+  return resync ? { resync } : {};
 }
 
 /**
@@ -205,6 +249,34 @@ export async function updateItem(
 export async function deleteItem(itemId: string): Promise<Result> {
   const uid = await userId();
   await db.delete(items).where(and(eq(items.id, itemId), eq(items.userId, uid)));
+  return {};
+}
+
+/**
+ * Remove an item from some of its active lists. If it has no active
+ * association left afterwards, the item is deleted entirely.
+ */
+export async function removeItemFromTags(itemId: string, tagIds: string[]): Promise<Result> {
+  const uid = await userId();
+  if (!tagIds.length) return {};
+  await db.transaction(async (tx) => {
+    await ownedItem(tx, uid, itemId);
+    await tx
+      .delete(itemTags)
+      .where(
+        and(
+          eq(itemTags.itemId, itemId),
+          inArray(itemTags.tagId, tagIds),
+          isNull(itemTags.completedAt),
+        ),
+      );
+    const [active] = await tx
+      .select({ tagId: itemTags.tagId })
+      .from(itemTags)
+      .where(and(eq(itemTags.itemId, itemId), isNull(itemTags.completedAt)))
+      .limit(1);
+    if (!active) await tx.delete(items).where(and(eq(items.id, itemId), eq(items.userId, uid)));
+  });
   return {};
 }
 

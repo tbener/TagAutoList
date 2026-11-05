@@ -4,7 +4,7 @@
  * can be unit-tested and later reused (e.g. recurrence, search).
  */
 
-export type Tag = { id: string; name: string; isList: boolean };
+export type Tag = { id: string; name: string; position: number };
 export type Item = {
   id: string;
   title: string;
@@ -18,6 +18,11 @@ export type Snapshot = { tags: Tag[]; items: Item[]; links: Link[] };
 export type ItemView = Item & { tags: Tag[] };
 
 const byName = (a: Tag, b: Tag) => a.name.localeCompare(b.name);
+
+/** The user's manual list order (name only breaks ties). */
+export const byPosition = (a: Tag, b: Tag) => a.position - b.position || byName(a, b);
+
+export const sortTags = (tags: Tag[]) => [...tags].sort(byPosition);
 
 /** Items that still have at least one incomplete association, with those tags. */
 export function activeItems(snap: Snapshot): ItemView[] {
@@ -62,7 +67,7 @@ export function browse(snap: Snapshot, path: string[]) {
       counts.set(tag.id, entry);
     }
   }
-  const subTags = [...counts.values()].sort((a, b) => byName(a.tag, b.tag));
+  const subTags = [...counts.values()].sort((a, b) => byPosition(a.tag, b.tag));
   return { items, subTags };
 }
 
@@ -74,7 +79,7 @@ export function tagsWithCounts(snap: Snapshot) {
     const m = l.completedAt ? done : active;
     m.set(l.tagId, (m.get(l.tagId) ?? 0) + 1);
   }
-  return [...snap.tags].sort(byName).map((tag) => ({
+  return sortTags(snap.tags).map((tag) => ({
     tag,
     active: active.get(tag.id) ?? 0,
     completed: done.get(tag.id) ?? 0,
@@ -146,7 +151,7 @@ export function sidebarModel(
       .filter(([id, n]) => n < sets.length || (onPath && path[nodePath.length] === id))
       .map(([id]) => byId.get(id))
       .filter((t): t is Tag => !!t)
-      .sort(byName);
+      .sort(byPosition);
     return {
       tag: byId.get(nodePath[nodePath.length - 1])!,
       path: nodePath,
@@ -159,8 +164,8 @@ export function sidebarModel(
     };
   };
 
-  // Every tag is a root; the `isList` flag is intentionally unused for now.
-  return [...tags].sort(byName).map((t) => build([t.id]));
+  // Every tag is a root, in the user's manual order.
+  return sortTags(tags).map((t) => build([t.id]));
 }
 
 export function browseHref(path: string[]) {

@@ -4,7 +4,7 @@ import { Plus, Tag as TagIcon, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-export type PickerTag = { id: string; name: string; isList: boolean };
+export type PickerTag = { id: string; name: string };
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 

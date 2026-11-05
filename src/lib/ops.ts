@@ -4,7 +4,7 @@
  * stay in step (and the server is the fallback source of truth on any error).
  */
 import { cleanNames, sameName } from "./names";
-import type { Snapshot } from "./tree";
+import { sortTags, type Snapshot, type Tag } from "./tree";
 
 export type TagRef = { id: string; name: string };
 
@@ -16,12 +16,21 @@ export function resolveRefs(snap: Snapshot, names: string[], newId: () => string
   });
 }
 
+/** The one place that decides where a new tag goes: above every existing one. */
+function withNewTagOnTop(tags: Tag[], ref: TagRef): Tag[] {
+  const position = tags.length ? Math.min(...tags.map((t) => t.position)) - 1 : 0;
+  return [...tags, { id: ref.id, name: ref.name, position }];
+}
+
 function withTags(snap: Snapshot, refs: TagRef[]): Snapshot {
   const known = new Set(snap.tags.map((t) => t.id));
-  const added = refs
-    .filter((r) => !known.has(r.id))
-    .map((r) => ({ id: r.id, name: r.name, isList: true }));
-  return added.length ? { ...snap, tags: [...snap.tags, ...added] } : snap;
+  let tags = snap.tags;
+  for (const r of refs) {
+    if (known.has(r.id)) continue;
+    known.add(r.id);
+    tags = withNewTagOnTop(tags, r);
+  }
+  return tags === snap.tags ? snap : { ...snap, tags };
 }
 
 export function addItem(
@@ -71,6 +80,18 @@ export function deleteItem(snap: Snapshot, id: string): Snapshot {
   };
 }
 
+/**
+ * Remove an item from some of its active lists. Completed associations are
+ * history and stay. If no active association is left, the item is deleted
+ * entirely (same as `deleteItem`).
+ */
+export function removeItemFromTags(snap: Snapshot, itemId: string, tagIds: string[]): Snapshot {
+  const ids = new Set(tagIds);
+  const links = snap.links.filter((l) => !(l.itemId === itemId && !l.completedAt && ids.has(l.tagId)));
+  const stillActive = links.some((l) => l.itemId === itemId && !l.completedAt);
+  return stillActive ? { ...snap, links } : deleteItem({ ...snap, links }, itemId);
+}
+
 export function completeItem(snap: Snapshot, itemId: string, tagIds: string[], now: Date): Snapshot {
   const ids = new Set(tagIds);
   return {
@@ -91,7 +112,22 @@ export function restoreCompletion(snap: Snapshot, itemId: string, tagId: string)
 }
 
 export function addTag(snap: Snapshot, tag: TagRef): Snapshot {
-  return { ...snap, tags: [...snap.tags, { id: tag.id, name: tag.name, isList: true }] };
+  return { ...snap, tags: withNewTagOnTop(snap.tags, tag) };
+}
+
+/**
+ * Apply a new manual order. `orderedIds` is the full list, top to bottom;
+ * anything missing from it keeps its relative order below the listed ones.
+ */
+export function reorderTags(snap: Snapshot, orderedIds: string[]): Snapshot {
+  const known = new Set(snap.tags.map((t) => t.id));
+  const first = [...new Set(orderedIds)].filter((id) => known.has(id));
+  const listed = new Set(first);
+  const rest = sortTags(snap.tags)
+    .map((t) => t.id)
+    .filter((id) => !listed.has(id));
+  const index = new Map([...first, ...rest].map((id, i) => [id, i]));
+  return { ...snap, tags: snap.tags.map((t) => ({ ...t, position: index.get(t.id)! })) };
 }
 
 export function renameTag(snap: Snapshot, id: string, name: string): Snapshot {

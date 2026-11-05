@@ -8,7 +8,7 @@ import {
 } from "./tree";
 
 const d = (n: number) => new Date(2026, 0, n);
-const tag = (id: string, name: string, isList = false) => ({ id, name, isList });
+const tag = (id: string, name: string, position = 0) => ({ id, name, position });
 const item = (id: string, title: string, day = 1) => ({
   id,
   title,
@@ -19,7 +19,7 @@ const item = (id: string, title: string, day = 1) => ({
 // The worked example from the spec.
 const base = (): Snapshot => ({
   tags: [
-    tag("shop", "Shopping", true),
+    tag("shop", "Shopping"),
     tag("k1", "Kid One"),
     tag("k2", "Kid Two"),
   ],
@@ -82,7 +82,7 @@ describe("sidebarModel", () => {
   const sets = (s: Snapshot) =>
     activeItems(s).map((i) => i.tags.map((t) => t.id));
 
-  it("shows every tag as a root (is_list is ignored) when nothing is selected", () => {
+  it("shows every tag as a root when nothing is selected", () => {
     const s = base();
     const roots = sidebarModel(s.tags, sets(s), []);
     expect(roots.map((r) => [r.tag.name, r.count, r.children.length])).toEqual([

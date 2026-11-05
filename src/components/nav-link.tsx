@@ -22,6 +22,10 @@ export function NavLink({
   return (
     <a
       href={href}
+      // Without this, dragging a row (list sorting) starts the browser's native
+      // link drag, and dropping it navigates the page — a full reload.
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
       onClick={(e) => {
         onClick?.(e);
         // Let the browser handle new-tab / modified clicks normally.

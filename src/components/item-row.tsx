@@ -27,6 +27,7 @@ export function ItemRow({
   const data = useData();
   const [editing, setEditing] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   function onCheck() {
     if (item.tags.length === 1) data.completeItem(item.id, [item.tags[0].id]);
@@ -66,49 +67,84 @@ export function ItemRow({
         type="button"
         aria-label="Edit"
         onClick={() => setEditing(true)}
-        className="-mr-1 shrink-0 rounded-xl p-2.5 text-muted hover:bg-accent-soft"
+        className="-mr-2 shrink-0 rounded-xl p-2.5 text-muted hover:bg-accent-soft"
       >
         <Pencil size={18} />
       </button>
+      <button
+        type="button"
+        aria-label="Delete"
+        onClick={() => setDeleting(true)}
+        className="-mr-1 shrink-0 rounded-xl p-2.5 text-muted hover:bg-danger/10 hover:text-danger"
+      >
+        <Trash2 size={18} />
+      </button>
 
       {completing && (
-        <CompleteDialog
+        <TagActionDialog
+          mode="complete"
           item={item}
           initial={contextTagIds.filter((id) => item.tags.some((t) => t.id === id))}
           onClose={() => setCompleting(false)}
         />
       )}
+      {deleting &&
+        (item.tags.length > 1 ? (
+          <TagActionDialog mode="delete" item={item} initial={[]} onClose={() => setDeleting(false)} />
+        ) : (
+          <ConfirmDeleteDialog item={item} onClose={() => setDeleting(false)} />
+        ))}
       {editing && <EditDialog item={item} allTags={allTags} onClose={() => setEditing(false)} />}
     </li>
   );
 }
 
-/** Multi-tag items: pick which associations are being completed. */
-function CompleteDialog({
+/** Multi-tag items: pick which associations to complete or remove. */
+function TagActionDialog({
+  mode,
   item,
   initial,
   onClose,
 }: {
+  mode: "complete" | "delete";
   item: RowItem;
   initial: string[];
   onClose: () => void;
 }) {
   const data = useData();
+  const isDelete = mode === "delete";
+  const allIds = item.tags.map((t) => t.id);
   const [selected, setSelected] = useState<string[]>(
-    initial.length ? initial : item.tags.map((t) => t.id),
+    isDelete ? [] : initial.length ? initial : allIds,
   );
-  const allSelected = selected.length === item.tags.length;
 
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  function run(ids: string[]) {
+    if (isDelete) data.removeItemFromTags(item.id, ids);
+    else data.completeItem(item.id, ids);
+    onClose();
+  }
 
   return (
     <Modal
       open
       onOpenChange={(o) => !o && onClose()}
-      title="Complete in which lists?"
-      description={`“${item.title}” is in several lists. Unchecked lists keep it active.`}
+      title={isDelete ? "Remove from which lists?" : "Complete in which lists?"}
+      description={
+        isDelete
+          ? `“${item.title}” is in several lists. Unchecked lists keep it.`
+          : `“${item.title}” is in several lists. Unchecked lists keep it active.`
+      }
     >
+      <Button
+        variant={isDelete ? "danger" : "primary"}
+        className="mb-3 w-full"
+        onClick={() => run(allIds)}
+      >
+        {isDelete ? "Delete from all lists" : "Complete in all lists"}
+      </Button>
       <ul className="space-y-1">
         {item.tags.map((t) => (
           <li key={t.id}>
@@ -124,28 +160,40 @@ function CompleteDialog({
           </li>
         ))}
       </ul>
-      <div className="mt-4 flex items-center justify-between gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSelected(allSelected ? [] : item.tags.map((t) => t.id))}
-        >
-          {allSelected ? "Select none" : "Select all"}
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="outline" onClick={onClose}>
+          Cancel
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            disabled={!selected.length}
-            onClick={() => {
-              data.completeItem(item.id, selected);
-              onClose();
-            }}
-          >
-            Complete
-          </Button>
-        </div>
+        <Button
+          variant={isDelete ? "danger" : "primary"}
+          disabled={!selected.length}
+          onClick={() => run(selected)}
+        >
+          {isDelete ? "Remove" : "Complete"}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
+/** Single-list items: light confirmation before deleting. */
+function ConfirmDeleteDialog({ item, onClose }: { item: RowItem; onClose: () => void }) {
+  const data = useData();
+  return (
+    <Modal open onOpenChange={(o) => !o && onClose()} title={`Delete “${item.title}”?`}>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="danger"
+          onClick={() => {
+            data.deleteItem(item.id);
+            onClose();
+          }}
+        >
+          Delete
+        </Button>
       </div>
     </Modal>
   );

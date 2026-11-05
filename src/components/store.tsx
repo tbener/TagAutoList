@@ -27,9 +27,11 @@ type Store = {
   addTag(name: string): Result;
   renameTag(id: string, name: string): Result;
   deleteTag(id: string): void;
+  reorderTags(orderedIds: string[]): void;
   addItem(title: string, tagNames: string[]): Result;
   updateItem(id: string, v: { title: string; notes: string; tagNames: string[] }): Result;
   deleteItem(id: string): void;
+  removeItemFromTags(id: string, tagIds: string[]): void;
   completeItem(id: string, tagIds: string[]): void;
   restoreCompletion(itemId: string, tagId: string): void;
 };
@@ -169,6 +171,11 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
         save(() => api.deleteTag(id));
       },
 
+      reorderTags(orderedIds) {
+        commit(ops.reorderTags(ref.current, orderedIds));
+        save(() => api.reorderTags(orderedIds));
+      },
+
       addItem(title, tagNames) {
         const t = title.trim();
         if (!t) return { error: "Title is required" };
@@ -193,6 +200,12 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
       deleteItem(id) {
         commit(ops.deleteItem(ref.current, id));
         save(() => api.deleteItem(id));
+      },
+
+      removeItemFromTags(id, tagIds) {
+        if (!tagIds.length) return;
+        commit(ops.removeItemFromTags(ref.current, id, tagIds));
+        save(() => api.removeItemFromTags(id, tagIds));
       },
 
       completeItem(id, tagIds) {

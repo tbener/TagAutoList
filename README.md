@@ -21,7 +21,7 @@ Other scripts: `npm test`, `npm run typecheck`, `npm run build`, `node scripts/m
 
 ## How it works
 
-- **Data model** (`src/db/schema.ts`): `users`, `tags`, `items`, `item_tags(completed_at)`. No tag↔tag relation. (`tags.is_list` exists but is unused for now — all tags behave the same.)
+- **Data model** (`src/db/schema.ts`): `users`, `tags`, `items`, `item_tags(completed_at)`. No tag↔tag relation. Every tag is a list; `tags.position` is the user's manual order (drag to reorder; new tags go on top).
 - **Load once, run from memory.** `(app)/layout.tsx` loads everything the user owns in one go and hands it to `components/store.tsx`. The whole UI (sidebar tree, list views, mobile filter chips, history) is derived from that in the browser, so navigation never waits on the server. Navigation is client-side history updates (`components/nav-link.tsx`); `components/app-root.tsx` picks the view from the URL. The `page.tsx` files are intentionally empty — they only make the URLs resolve on refresh/deep link.
 - **Optimistic saving.** Every change is applied locally first (`src/lib/ops.ts`, pure and unit-tested) and saved in the background through an ordered queue calling the server actions in `src/app/actions.ts`. New rows get client-generated ids. If a save fails, the app reloads from the server and shows a notice; it also refreshes when the tab regains focus (picks up changes from other devices).
 - **Tree logic** (`src/lib/tree.ts`): pure functions. `browse(path)` = items having *all* path tags; `sidebarModel` builds the tree (every tag is a root; children = tags co-occurring with the whole path; a child that covers every item of its parent is hidden). Nodes show an expand chevron when they have sub-branches.
