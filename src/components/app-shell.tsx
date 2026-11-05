@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { activeItems, browseHref, nodeKey, pathKeys, sidebarModel, type TreeNode } from "@/lib/tree";
-import { AppDnd, SortableLists, SortableRow } from "./dnd";
+import { AppDnd, SortableLists, SortableRow, useTagDrop } from "./dnd";
 import { NewListButton } from "./list-forms";
 import { NavLink } from "./nav-link";
 import { useData } from "./store";
@@ -17,7 +17,7 @@ import { useData } from "./store";
  */
 export function AppShell({ footer, children }: { footer: ReactNode; children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
-  const { pending, notice } = useData();
+  const { pending, notice, toast } = useData();
   const pathname = usePathname();
   const search = useSearchParams();
 
@@ -61,6 +61,15 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
           className="fixed inset-x-3 top-3 z-50 mx-auto max-w-md rounded-xl bg-danger px-4 py-3 text-sm font-medium text-white shadow-lg"
         >
           {notice}
+        </div>
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-fg px-4 py-2.5 text-sm font-medium text-bg shadow-lg md:bottom-6"
+        >
+          {toast}
         </div>
       )}
 
@@ -140,7 +149,13 @@ function Sidebar({
               rowDrag={area === "desk"}
             >
               {(grip) => (
-                <TreeItem node={node} expanded={expanded} onToggle={toggle} grip={grip} />
+                <TreeItem
+                  node={node}
+                  expanded={expanded}
+                  onToggle={toggle}
+                  grip={grip}
+                  drop={area === "desk"}
+                />
               )}
             </SortableRow>
           ))}
@@ -160,21 +175,28 @@ function TreeItem({
   expanded,
   onToggle,
   grip,
+  drop = false,
 }: {
   node: TreeNode;
   expanded: Set<string>;
   onToggle: (key: string) => void;
   /** Reorder handle — only root-level lists get one. */
   grip?: ReactNode;
+  /** Desktop sidebar: this row accepts a dragged item (adds this tag to it). */
+  drop?: boolean;
 }) {
   const key = nodeKey(node.path);
   const open = expanded.has(key);
+  const target = useTagDrop(key, node.tag.id, drop);
   return (
     <div>
       <div
+        ref={target.setNodeRef}
         className={cn(
           "flex items-center rounded-xl hover:bg-accent-soft",
           node.selected && "bg-accent-soft text-accent",
+          target.target && "ring-1 ring-accent/30",
+          target.over && "bg-accent text-accent-fg ring-2 ring-accent",
         )}
       >
         <button
@@ -205,7 +227,7 @@ function TreeItem({
       {open && node.children.length > 0 && (
         <div className="ml-5 border-l border-border pl-1">
           {node.children.map((c) => (
-            <TreeItem key={c.tag.id} node={c} expanded={expanded} onToggle={onToggle} />
+            <TreeItem key={c.tag.id} node={c} expanded={expanded} onToggle={onToggle} drop={drop} />
           ))}
         </div>
       )}

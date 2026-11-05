@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db, type Tx } from "@/db";
 import { itemTags, items, tags } from "@/db/schema";
@@ -44,6 +44,15 @@ async function topPosition(tx: Tx | typeof db, uid: string) {
     .select({ min: sql<number | null>`min(${tags.position})` })
     .from(tags)
     .where(eq(tags.userId, uid));
+  return row?.min == null ? 0 : Number(row.min) - 1;
+}
+
+/** Where a new association goes in a tag's list: above every existing one (mirrors `topLinkPosition`). */
+async function topLinkPosition(tx: Tx, tagId: string) {
+  const [row] = await tx
+    .select({ min: sql<number | null>`min(${itemTags.position})` })
+    .from(itemTags)
+    .where(eq(itemTags.tagId, tagId));
   return row?.min == null ? 0 : Number(row.min) - 1;
 }
 
@@ -198,10 +207,11 @@ export async function createItem(input: {
       .onConflictDoNothing()
       .returning({ id: items.id });
     if (!item) return; // already created (e.g. a retry)
-    await tx
-      .insert(itemTags)
-      .values(resolved.ids.map((tagId) => ({ itemId: item.id, tagId })))
-      .onConflictDoNothing();
+    for (const tagId of resolved.ids)
+      await tx
+        .insert(itemTags)
+        .values({ itemId: item.id, tagId, position: await topLinkPosition(tx, tagId) })
+        .onConflictDoNothing();
   });
   return resync ? { resync } : {};
 }
@@ -235,11 +245,12 @@ export async function updateItem(
 
     for (const tagId of wanted) {
       const current = existing.find((l) => l.tagId === tagId);
-      if (!current) await tx.insert(itemTags).values({ itemId, tagId });
-      else if (current.completedAt) // re-adding a finished tag reactivates it
+      if (!current)
+        await tx.insert(itemTags).values({ itemId, tagId, position: await topLinkPosition(tx, tagId) });
+      else if (current.completedAt) // re-adding a finished tag reactivates it, on top
         await tx
           .update(itemTags)
-          .set({ completedAt: null })
+          .set({ completedAt: null, position: await topLinkPosition(tx, tagId) })
           .where(and(eq(itemTags.itemId, itemId), eq(itemTags.tagId, tagId)));
     }
   });
@@ -307,8 +318,78 @@ export async function restoreCompletion(itemId: string, tagId: string): Promise<
     await ownedItem(tx, uid, itemId);
     await tx
       .update(itemTags)
-      .set({ completedAt: null })
-      .where(and(eq(itemTags.itemId, itemId), eq(itemTags.tagId, tagId)));
+      .set({ completedAt: null, position: await topLinkPosition(tx, tagId) })
+      .where(
+        and(eq(itemTags.itemId, itemId), eq(itemTags.tagId, tagId), isNotNull(itemTags.completedAt)),
+      );
   });
   return {};
+}
+
+async function ownedTag(tx: Tx, uid: string, tagId: string) {
+  const [row] = await tx
+    .select({ id: tags.id })
+    .from(tags)
+    .where(and(eq(tags.id, tagId), eq(tags.userId, uid)));
+  if (!row) throw new Error("List not found");
+}
+
+/**
+ * Add an existing tag to an item, at the top of that list (drop-to-tag).
+ * A finished association is reactivated; an active one is left alone.
+ */
+export async function addItemTag(itemId: string, tagId: string): Promise<Result> {
+  const uid = await userId();
+  await db.transaction(async (tx) => {
+    await ownedItem(tx, uid, itemId);
+    await ownedTag(tx, uid, tagId);
+    const [current] = await tx
+      .select()
+      .from(itemTags)
+      .where(and(eq(itemTags.itemId, itemId), eq(itemTags.tagId, tagId)));
+    if (current && !current.completedAt) return;
+    const position = await topLinkPosition(tx, tagId);
+    if (current)
+      await tx
+        .update(itemTags)
+        .set({ completedAt: null, position })
+        .where(and(eq(itemTags.itemId, itemId), eq(itemTags.tagId, tagId)));
+    else await tx.insert(itemTags).values({ itemId, tagId, position });
+  });
+  return {};
+}
+
+/**
+ * Persist a manual item order within one list: `orderedItemIds` top to bottom.
+ * The list's other associations keep their relative order below (mirrors
+ * `reorderItems` in lib/ops.ts).
+ */
+export async function reorderItems(tagId: string, orderedItemIds: string[]): Promise<Result> {
+  const uid = await userId();
+  let resync = false;
+  await db.transaction(async (tx) => {
+    await ownedTag(tx, uid, tagId);
+    const current = await tx
+      .select({ itemId: itemTags.itemId })
+      .from(itemTags)
+      .innerJoin(items, eq(items.id, itemTags.itemId))
+      .where(eq(itemTags.tagId, tagId))
+      .orderBy(asc(itemTags.position), desc(items.createdAt), asc(items.id));
+    const known = new Set(current.map((l) => l.itemId));
+    const first = [...new Set(orderedItemIds)].filter((id) => known.has(id));
+    const listed = new Set(first);
+    const rest = current.map((l) => l.itemId).filter((id) => !listed.has(id));
+    resync = first.length !== new Set(orderedItemIds).size;
+    const order = [...first, ...rest];
+    if (!order.length) return;
+    const values = sql.join(
+      order.map((id, i) => sql`(${id}::uuid, ${i}::integer)`),
+      sql`, `,
+    );
+    await tx.execute(sql`
+      update item_tags set position = v.pos
+      from (values ${values}) as v(item_id, pos)
+      where item_tags.item_id = v.item_id and item_tags.tag_id = ${tagId}::uuid`);
+  });
+  return resync ? { resync } : {};
 }

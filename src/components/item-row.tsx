@@ -2,9 +2,11 @@
 
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useItemSortable } from "./dnd";
 import { NavLink } from "./nav-link";
 import { useData } from "./store";
 import { TagPicker, type PickerTag } from "./tag-picker";
+import { cn } from "@/lib/utils";
 import { Button, Input, Modal } from "./ui";
 
 export type RowItem = {
@@ -18,13 +20,22 @@ export function ItemRow({
   item,
   allTags,
   contextTagIds = [],
+  sortTagId,
 }: {
   item: RowItem;
   allTags: PickerTag[];
   /** Tags of the current browse path, pre-selected when completing. */
   contextTagIds?: string[];
+  /** Set in a single-list view: the row can be dragged to reorder within this list. */
+  sortTagId?: string;
 }) {
   const data = useData();
+  const sort = useItemSortable({
+    itemId: item.id,
+    tagId: sortTagId ?? "",
+    title: item.title,
+    enabled: !!sortTagId,
+  });
   const [editing, setEditing] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -34,68 +45,97 @@ export function ItemRow({
     else setCompleting(true);
   }
 
+  // The dialogs are siblings of the <li>, not children: React events bubble
+  // through portals, and a press inside a dialog must never start a row drag.
   return (
-    <li className="flex items-start gap-3.5 rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <button
-        type="button"
-        aria-label={`Complete ${item.title}`}
-        onClick={onCheck}
-        className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent active:scale-95"
-      >
-        <Check size={16} strokeWidth={3} />
-      </button>
-
-      <div className="min-w-0 flex-1">
-        <p className="break-words text-[1.05rem] font-medium leading-snug">{item.title}</p>
-        {item.notes && (
-          <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm text-muted">{item.notes}</p>
+    <>
+      <li
+        {...sort?.rowProps}
+        className={cn(
+          "group/row flex items-start gap-3.5 rounded-2xl border border-border bg-card p-4 shadow-sm",
+          sort?.desktop && "cursor-grab",
+          sort?.isDragging && "opacity-40",
         )}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {item.tags.map((t) => (
-            <NavLink
-              key={t.id}
-              href={`/browse?t=${t.id}`}
-              className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent hover:opacity-80"
-            >
-              {t.name}
-            </NavLink>
-          ))}
-        </div>
-      </div>
+      >
+        <button
+          type="button"
+          aria-label={`Complete ${item.title}`}
+          onClick={onCheck}
+          className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent active:scale-95"
+        >
+          <Check size={16} strokeWidth={3} />
+        </button>
 
-      <button
-        type="button"
-        aria-label="Edit"
-        onClick={() => setEditing(true)}
-        className="-mr-2 shrink-0 rounded-xl p-2.5 text-muted hover:bg-accent-soft"
-      >
-        <Pencil size={18} />
-      </button>
-      <button
-        type="button"
-        aria-label="Delete"
-        onClick={() => setDeleting(true)}
-        className="-mr-1 shrink-0 rounded-xl p-2.5 text-muted hover:bg-danger/10 hover:text-danger"
-      >
-        <Trash2 size={18} />
-      </button>
+        <div className="min-w-0 flex-1">
+          <p className="break-words text-[1.05rem] font-medium leading-snug">
+            {item.title}
+          </p>
+          {item.notes && (
+            <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm text-muted">
+              {item.notes}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {item.tags.map((t) => (
+              <NavLink
+                key={t.id}
+                href={`/browse?t=${t.id}`}
+                className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent hover:opacity-80"
+              >
+                {t.name}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          aria-label="Edit"
+          onClick={() => setEditing(true)}
+          className="-mr-2 shrink-0 rounded-xl p-2.5 text-muted hover:bg-accent-soft"
+        >
+          <Pencil size={18} />
+        </button>
+        <button
+          type="button"
+          aria-label="Delete"
+          onClick={() => setDeleting(true)}
+          className="-mr-1 shrink-0 rounded-xl p-2.5 text-muted hover:bg-danger/10 hover:text-danger"
+        >
+          <Trash2 size={18} />
+        </button>
+        {sort?.grip}
+      </li>
 
       {completing && (
         <TagActionDialog
           mode="complete"
           item={item}
-          initial={contextTagIds.filter((id) => item.tags.some((t) => t.id === id))}
+          initial={contextTagIds.filter((id) =>
+            item.tags.some((t) => t.id === id),
+          )}
           onClose={() => setCompleting(false)}
         />
       )}
       {deleting &&
         (item.tags.length > 1 ? (
-          <TagActionDialog mode="delete" item={item} initial={[]} onClose={() => setDeleting(false)} />
+          <TagActionDialog
+            mode="delete"
+            item={item}
+            initial={[]}
+            onClose={() => setDeleting(false)}
+          />
         ) : (
           <ConfirmDeleteDialog item={item} onClose={() => setDeleting(false)} />
         ))}
-      {editing && <EditDialog item={item} allTags={allTags} onClose={() => setEditing(false)} />}
-    </li>
+      {editing && (
+        <EditDialog
+          item={item}
+          allTags={allTags}
+          onClose={() => setEditing(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -119,7 +159,9 @@ function TagActionDialog({
   );
 
   const toggle = (id: string) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    setSelected((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
+    );
 
   function run(ids: string[]) {
     if (isDelete) data.removeItemFromTags(item.id, ids);
@@ -177,10 +219,20 @@ function TagActionDialog({
 }
 
 /** Single-list items: light confirmation before deleting. */
-function ConfirmDeleteDialog({ item, onClose }: { item: RowItem; onClose: () => void }) {
+function ConfirmDeleteDialog({
+  item,
+  onClose,
+}: {
+  item: RowItem;
+  onClose: () => void;
+}) {
   const data = useData();
   return (
-    <Modal open onOpenChange={(o) => !o && onClose()} title={`Delete “${item.title}”?`}>
+    <Modal
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={`Delete “${item.title}”?`}
+    >
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={onClose}>
           Cancel
@@ -226,7 +278,11 @@ function EditDialog({
           else onClose();
         }}
       >
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Title" />
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          aria-label="Title"
+        />
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -234,7 +290,12 @@ function EditDialog({
           rows={3}
           className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-base outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25 md:text-sm"
         />
-        <TagPicker allTags={allTags} value={tagNames} onChange={setTagNames} placeholder="Add to list…" />
+        <TagPicker
+          allTags={allTags}
+          value={tagNames}
+          onChange={setTagNames}
+          placeholder="Add to list…"
+        />
         {error && <p className="text-sm text-danger">{error}</p>}
         <div className="flex items-center justify-between pt-1">
           {confirmDelete ? (
@@ -248,7 +309,11 @@ function EditDialog({
               Confirm delete
             </Button>
           ) : (
-            <Button variant="ghost" className="text-danger" onClick={() => setConfirmDelete(true)}>
+            <Button
+              variant="ghost"
+              className="text-danger"
+              onClick={() => setConfirmDelete(true)}
+            >
               <Trash2 size={16} /> Delete
             </Button>
           )}

@@ -9,6 +9,12 @@ import {
 
 const d = (n: number) => new Date(2026, 0, n);
 const tag = (id: string, name: string, position = 0) => ({ id, name, position });
+const link = (itemId: string, tagId: string, position = 0) => ({
+  itemId,
+  tagId,
+  completedAt: null,
+  position,
+});
 const item = (id: string, title: string, day = 1) => ({
   id,
   title,
@@ -29,11 +35,11 @@ const base = (): Snapshot => ({
     item("lesson", "Education Lesson", 3),
   ],
   links: [
-    { itemId: "chair", tagId: "shop", completedAt: null },
-    { itemId: "chair", tagId: "k1", completedAt: null },
-    { itemId: "table", tagId: "shop", completedAt: null },
-    { itemId: "table", tagId: "k2", completedAt: null },
-    { itemId: "lesson", tagId: "k1", completedAt: null },
+    link("chair", "shop"),
+    link("chair", "k1"),
+    link("table", "shop"),
+    link("table", "k2"),
+    link("lesson", "k1"),
   ],
 });
 
@@ -68,6 +74,24 @@ describe("browse", () => {
     const shop = browse(snap, ["shop"]);
     const chair = shop.items.find((i) => i.id === "chair")!;
     expect(chair.tags.map((t) => t.name)).toEqual(["Shopping"]);
+  });
+
+  it("orders items by the first tag of the path; ties fall back to newest first", () => {
+    const snap = base();
+    // Shopping: Chair (day 1) pinned above Table (day 2)
+    snap.links[0].position = 0; // chair/shop
+    snap.links[2].position = 1; // table/shop
+    expect(browse(snap, ["shop"]).items.map((i) => i.id)).toEqual(["chair", "table"]);
+    // Kid One: Lesson (day 3) and Chair (day 1) both 0 → newest first
+    expect(browse(snap, ["k1"]).items.map((i) => i.id)).toEqual(["lesson", "chair"]);
+    // reordering in Shopping does not change Kid One; and a drilled-down path
+    // follows its first tag
+    snap.links[1].position = -1; // chair/k1 above lesson
+    expect(browse(snap, ["k1"]).items.map((i) => i.id)).toEqual(["chair", "lesson"]);
+    expect(browse(snap, ["shop", "k1"]).items.map((i) => i.id)).toEqual(["chair"]);
+    snap.links.push(link("lesson", "shop", -5));
+    expect(browse(snap, ["shop", "k1"]).items.map((i) => i.id)).toEqual(["lesson", "chair"]);
+    expect(browse(snap, ["k1", "shop"]).items.map((i) => i.id)).toEqual(["chair", "lesson"]);
   });
 
   it("drops an item entirely once every association is complete", () => {
@@ -127,7 +151,7 @@ describe("sidebarModel", () => {
   it("hides a sub-tag that covers every item of its parent", () => {
     const s = base();
     // Kid One: Chair + Lesson. Make Shopping cover both (add Lesson to Shopping).
-    s.links.push({ itemId: "lesson", tagId: "shop", completedAt: null });
+    s.links.push(link("lesson", "shop"));
     const kid = sidebarModel(s.tags, sets(s), ["k1"]).find((r) => r.tag.id === "k1")!;
     expect(kid.children).toEqual([]); // Shopping == all of Kid One's items
     // ...but Shopping still lists Kid One (it covers only 2 of Shopping's 3).

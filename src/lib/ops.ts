@@ -4,7 +4,7 @@
  * stay in step (and the server is the fallback source of truth on any error).
  */
 import { cleanNames, sameName } from "./names";
-import { sortTags, type Snapshot, type Tag } from "./tree";
+import { orderedTagLinks, sortTags, type Link, type Snapshot, type Tag } from "./tree";
 
 export type TagRef = { id: string; name: string };
 
@@ -20,6 +20,13 @@ export function resolveRefs(snap: Snapshot, names: string[], newId: () => string
 function withNewTagOnTop(tags: Tag[], ref: TagRef): Tag[] {
   const position = tags.length ? Math.min(...tags.map((t) => t.position)) - 1 : 0;
   return [...tags, { id: ref.id, name: ref.name, position }];
+}
+
+/** Where a new association goes in a tag's list: above every existing one. */
+export function topLinkPosition(links: Link[], tagId: string): number {
+  let min: number | null = null;
+  for (const l of links) if (l.tagId === tagId && (min === null || l.position < min)) min = l.position;
+  return min === null ? 0 : min - 1;
 }
 
 function withTags(snap: Snapshot, refs: TagRef[]): Snapshot {
@@ -43,7 +50,12 @@ export function addItem(
     items: [...s.items, { id: p.id, title: p.title, notes: "", createdAt: p.now }],
     links: [
       ...s.links,
-      ...p.refs.map((r) => ({ itemId: p.id, tagId: r.id, completedAt: null })),
+      ...p.refs.map((r) => ({
+        itemId: p.id,
+        tagId: r.id,
+        completedAt: null,
+        position: topLinkPosition(s.links, r.id),
+      })),
     ],
   };
 }
@@ -60,10 +72,18 @@ export function updateItem(
   const have = new Set(links.filter((l) => l.itemId === p.id).map((l) => l.tagId));
   // Re-adding a finished tag reactivates it.
   links = links.map((l) =>
-    l.itemId === p.id && l.completedAt && wanted.has(l.tagId) ? { ...l, completedAt: null } : l,
+    l.itemId === p.id && l.completedAt && wanted.has(l.tagId)
+      ? { ...l, completedAt: null, position: topLinkPosition(s.links, l.tagId) }
+      : l,
   );
   for (const r of p.refs) {
-    if (!have.has(r.id)) links.push({ itemId: p.id, tagId: r.id, completedAt: null });
+    if (!have.has(r.id))
+      links.push({
+        itemId: p.id,
+        tagId: r.id,
+        completedAt: null,
+        position: topLinkPosition(s.links, r.id),
+      });
   }
   return {
     ...s,
@@ -102,12 +122,57 @@ export function completeItem(snap: Snapshot, itemId: string, tagIds: string[], n
   };
 }
 
+/** Un-complete an association; it comes back at the top of that list. */
 export function restoreCompletion(snap: Snapshot, itemId: string, tagId: string): Snapshot {
+  const top = topLinkPosition(snap.links, tagId);
   return {
     ...snap,
     links: snap.links.map((l) =>
-      l.itemId === itemId && l.tagId === tagId ? { ...l, completedAt: null } : l,
+      l.itemId === itemId && l.tagId === tagId && l.completedAt
+        ? { ...l, completedAt: null, position: top }
+        : l,
     ),
+  };
+}
+
+export function hasActiveTag(snap: Snapshot, itemId: string, tagId: string): boolean {
+  return snap.links.some((l) => l.itemId === itemId && l.tagId === tagId && !l.completedAt);
+}
+
+/**
+ * Add a tag to an item, at the top of that list. A finished association is
+ * reactivated; one that is already active is left alone.
+ */
+export function addTagToItem(snap: Snapshot, itemId: string, tagId: string): Snapshot {
+  if (!snap.items.some((i) => i.id === itemId) || !snap.tags.some((t) => t.id === tagId)) return snap;
+  if (hasActiveTag(snap, itemId, tagId)) return snap;
+  const top = topLinkPosition(snap.links, tagId);
+  const existing = snap.links.some((l) => l.itemId === itemId && l.tagId === tagId);
+  return {
+    ...snap,
+    links: existing
+      ? snap.links.map((l) =>
+          l.itemId === itemId && l.tagId === tagId ? { ...l, completedAt: null, position: top } : l,
+        )
+      : [...snap.links, { itemId, tagId, completedAt: null, position: top }],
+  };
+}
+
+/**
+ * Apply a new item order *within one list*. `orderedItemIds` is the visible
+ * order, top to bottom; the list's other associations (e.g. completed ones)
+ * keep their relative order below. Other lists are untouched.
+ */
+export function reorderItems(snap: Snapshot, tagId: string, orderedItemIds: string[]): Snapshot {
+  const current = orderedTagLinks(snap, tagId);
+  const known = new Set(current.map((l) => l.itemId));
+  const first = [...new Set(orderedItemIds)].filter((id) => known.has(id));
+  const listed = new Set(first);
+  const rest = current.map((l) => l.itemId).filter((id) => !listed.has(id));
+  const index = new Map([...first, ...rest].map((id, i) => [id, i]));
+  return {
+    ...snap,
+    links: snap.links.map((l) => (l.tagId === tagId ? { ...l, position: index.get(l.itemId)! } : l)),
   };
 }
 

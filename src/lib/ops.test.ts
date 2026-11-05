@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as ops from "./ops";
-import { activeItems, sortTags, tagsWithCounts, type Snapshot } from "./tree";
+import { activeItems, browse, sortTags, tagsWithCounts, type Snapshot } from "./tree";
 
 const now = new Date(2026, 5, 1);
 const empty = (): Snapshot => ({ tags: [], items: [], links: [] });
@@ -122,6 +122,71 @@ describe("ops", () => {
     // unknown ids are ignored; tags left out keep their order below
     const partial = ops.reorderTags(s, ["nope", shop.id]);
     expect(order(partial)).toEqual(["Shopping", "Kid One"]);
+  });
+
+  const idsIn = (s: Snapshot, tagId: string) =>
+    browse(s, [tagId]).items.map((i) => i.id);
+
+  it("new items and added tags go to the top of each list", () => {
+    const s = seeded(); // Shopping: y above x (y added later); Kid One: x
+    const [shop, kid] = s.tags;
+    expect(idsIn(s, shop.id)).toEqual(["y", "x"]);
+    const refs = ops.resolveRefs(s, ["Shopping", "Kid One"], newId);
+    const withZ = ops.addItem(s, { id: "z", title: "Z", refs, now });
+    expect(idsIn(withZ, shop.id)).toEqual(["z", "y", "x"]);
+    expect(idsIn(withZ, kid.id)).toEqual(["z", "x"]);
+    // adding a tag while editing puts the item on top of that list
+    const edited = ops.updateItem(withZ, {
+      id: "y",
+      title: "Table",
+      notes: "",
+      refs: [shop, kid].map((t) => ({ id: t.id, name: t.name })),
+    });
+    expect(idsIn(edited, kid.id)).toEqual(["y", "z", "x"]);
+    expect(idsIn(edited, shop.id)).toEqual(["z", "y", "x"]);
+  });
+
+  it("reorderItems changes one list only", () => {
+    const s = seeded();
+    const [shop, kid] = s.tags;
+    const before = idsIn(s, kid.id);
+    const re = ops.reorderItems(s, shop.id, ["x", "y"]);
+    expect(idsIn(re, shop.id)).toEqual(["x", "y"]);
+    expect(idsIn(re, kid.id)).toEqual(before);
+    // drilled down: follows the first tag of the path
+    expect(browse(re, [shop.id, kid.id]).items.map((i) => i.id)).toEqual(["x"]);
+  });
+
+  it("reorderItems keeps completed associations below and ignores unknown ids", () => {
+    const s = seeded();
+    const shop = s.tags[0];
+    const done = ops.completeItem(s, "y", [shop.id], now);
+    const re = ops.reorderItems(done, shop.id, ["nope", "x"]);
+    expect(idsIn(re, shop.id)).toEqual(["x"]);
+    const positions = re.links.filter((l) => l.tagId === shop.id).map((l) => l.position).sort();
+    expect(positions).toEqual([0, 1]);
+  });
+
+  it("restoreCompletion puts the item back on top of that list", () => {
+    const s = seeded();
+    const shop = s.tags[0];
+    const done = ops.completeItem(s, "x", [shop.id], now);
+    expect(idsIn(ops.restoreCompletion(done, "x", shop.id), shop.id)).toEqual(["x", "y"]);
+  });
+
+  it("addTagToItem adds at the top, reactivates finished tags, ignores active ones", () => {
+    const s = seeded();
+    const [shop, kid] = s.tags;
+    const added = ops.addTagToItem(s, "y", kid.id);
+    expect(idsIn(added, kid.id)).toEqual(["y", "x"]);
+    expect(activeItems(added).find((i) => i.id === "y")!.tags).toHaveLength(2);
+    expect(ops.hasActiveTag(added, "y", kid.id)).toBe(true);
+    expect(ops.addTagToItem(added, "y", kid.id)).toBe(added); // already there → no-op
+    const done = ops.completeItem(added, "y", [kid.id], now);
+    const back = ops.addTagToItem(done, "y", kid.id);
+    expect(idsIn(back, kid.id)).toEqual(["y", "x"]);
+    expect(back.links.filter((l) => l.itemId === "y" && l.tagId === kid.id)).toHaveLength(1);
+    expect(ops.addTagToItem(s, "ghost", shop.id)).toBe(s);
   });
 
   it("restoreCompletion reactivates", () => {

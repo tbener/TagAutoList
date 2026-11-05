@@ -55,6 +55,7 @@ export const items = pgTable(
 /**
  * Many-to-many join. Completion lives here, per association: a non-null
  * `completedAt` means "done under this tag" and is kept for history.
+ * `position` is the item's manual order *within this tag* (per list).
  */
 export const itemTags = pgTable(
   "item_tags",
@@ -66,6 +67,8 @@ export const itemTags = pgTable(
       .notNull()
       .references(() => tags.id, { onDelete: "cascade" }),
     completedAt: timestamp({ withTimezone: true }),
+    /** Order of this item within this tag's list (lower = higher up). */
+    position: integer().notNull().default(0),
   },
   (t) => [
     primaryKey({ columns: [t.itemId, t.tagId] }),

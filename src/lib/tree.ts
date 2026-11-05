@@ -11,7 +11,13 @@ export type Item = {
   notes: string;
   createdAt: Date;
 };
-export type Link = { itemId: string; tagId: string; completedAt: Date | null };
+export type Link = {
+  itemId: string;
+  tagId: string;
+  completedAt: Date | null;
+  /** Order of the item within this tag's list (lower = higher up). */
+  position: number;
+};
 export type Snapshot = { tags: Tag[]; items: Item[]; links: Link[] };
 
 /** An item plus the tags it is still *active* under. */
@@ -47,16 +53,34 @@ export function activeItems(snap: Snapshot): ItemView[] {
 const newestFirst = (a: Item, b: Item) =>
   b.createdAt.getTime() - a.createdAt.getTime();
 
+/** A tag's associations in list order (position, then newest item, then id). */
+export function orderedTagLinks(snap: Snapshot, tagId: string): Link[] {
+  const created = new Map(snap.items.map((i) => [i.id, i.createdAt.getTime()]));
+  return snap.links
+    .filter((l) => l.tagId === tagId)
+    .sort(
+      (a, b) =>
+        a.position - b.position ||
+        (created.get(b.itemId) ?? 0) - (created.get(a.itemId) ?? 0) ||
+        a.itemId.localeCompare(b.itemId),
+    );
+}
+
 export type SubTag = { tag: Tag; count: number };
 
 /**
  * Items under the intersection of `path` tags, plus every *other* tag that
  * co-occurs on at least one of those items (with how many items share it).
+ * Items follow the order of the *first* tag of the path (the list the user
+ * came in from); newest first only breaks ties.
  */
 export function browse(snap: Snapshot, path: string[]) {
+  const pos = new Map<string, number>();
+  if (path.length)
+    for (const l of snap.links) if (l.tagId === path[0]) pos.set(l.itemId, l.position);
   const items = activeItems(snap)
     .filter((i) => path.every((id) => i.tags.some((t) => t.id === id)))
-    .sort(newestFirst);
+    .sort((a, b) => (pos.get(a.id) ?? 0) - (pos.get(b.id) ?? 0) || newestFirst(a, b));
 
   const counts = new Map<string, SubTag>();
   for (const item of items) {

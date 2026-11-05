@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { browse, browseHref } from "@/lib/tree";
 import { AddItemForm } from "../add-item-form";
+import { SortableLists } from "../dnd";
 import { FilterBar } from "../filter-bar";
 import { ItemRow } from "../item-row";
 import { ListActions } from "../list-forms";
@@ -77,11 +78,21 @@ export function BrowseView({ ids, focus }: { ids: string[]; focus: boolean }) {
           Nothing to do here.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {view.items.map((item) => (
-            <ItemRow key={item.id} item={item} allTags={snap.tags} contextTagIds={path} />
-          ))}
-        </ul>
+        // Reordering only in a single-list view; a drilled-down view is a filtered
+        // subset, so it follows the entry list's order and shows no drag affordance.
+        <SortableLists area="items" ids={view.items.map((i) => i.id)}>
+          <ul className="space-y-3">
+            {view.items.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                allTags={snap.tags}
+                contextTagIds={path}
+                sortTagId={path.length === 1 ? path[0] : undefined}
+              />
+            ))}
+          </ul>
+        </SortableLists>
       )}
     </>
   );

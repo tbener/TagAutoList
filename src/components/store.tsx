@@ -32,6 +32,12 @@ type Store = {
   updateItem(id: string, v: { title: string; notes: string; tagNames: string[] }): Result;
   deleteItem(id: string): void;
   removeItemFromTags(id: string, tagIds: string[]): void;
+  reorderItems(tagId: string, orderedItemIds: string[]): void;
+  /** Drop-to-tag. Returns false (and does nothing) when the item already has the tag. */
+  addTagToItem(itemId: string, tagId: string): boolean;
+  /** A short neutral confirmation message. */
+  toast: string | null;
+  flash(message: string): void;
   completeItem(id: string, tagIds: string[]): void;
   restoreCompletion(itemId: string, tagId: string): void;
 };
@@ -63,6 +69,7 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
   const [snap, setSnap] = useState(initial);
   const [pending, setPending] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const ref = useRef(initial); // always-current copy for synchronous reads
   const chain = useRef<Promise<void>>(Promise.resolve());
@@ -138,6 +145,12 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
     return () => clearTimeout(t);
   }, [notice]);
 
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   const store = useMemo<Store>(() => {
     const dup = (name: string, exceptId?: string) =>
       ref.current.tags.some((t) => t.id !== exceptId && sameName(t.name, name));
@@ -202,6 +215,23 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
         save(() => api.deleteItem(id));
       },
 
+      reorderItems(tagId, orderedItemIds) {
+        commit(ops.reorderItems(ref.current, tagId, orderedItemIds));
+        save(() => api.reorderItems(tagId, orderedItemIds));
+      },
+
+      addTagToItem(itemId, tagId) {
+        if (ops.hasActiveTag(ref.current, itemId, tagId)) return false;
+        commit(ops.addTagToItem(ref.current, itemId, tagId));
+        save(() => api.addItemTag(itemId, tagId));
+        return true;
+      },
+
+      toast,
+      flash(message) {
+        setToast(message);
+      },
+
       removeItemFromTags(id, tagIds) {
         if (!tagIds.length) return;
         commit(ops.removeItemFromTags(ref.current, id, tagIds));
@@ -219,7 +249,7 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
         save(() => api.restoreCompletion(itemId, tagId));
       },
     };
-  }, [snap, pending, notice, commit, save]);
+  }, [snap, pending, notice, toast, commit, save]);
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
