@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronRight, Menu } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { APP_VERSION } from "@/lib/app-info";
 import { cn } from "@/lib/utils";
 import { activeItems, browseHref, nodeKey, pathKeys, sidebarModel, type TreeNode } from "@/lib/tree";
 import { AppDnd, SortableLists, SortableRow, useTagDrop } from "./dnd";
@@ -165,6 +166,14 @@ function Sidebar({
       <div className="space-y-1 border-t border-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <NewListButton />
         {footer}
+        <div className="flex items-center justify-between px-3 pt-1 text-xs text-muted">
+          <NavLink href="/about" className="rounded-md py-1 hover:text-fg">
+            About
+          </NavLink>
+          <NavLink href="/changelog" title="What's new" className="rounded-md py-1 hover:text-fg">
+            v{APP_VERSION}
+          </NavLink>
+        </div>
       </div>
     </div>
   );

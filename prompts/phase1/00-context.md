@@ -29,3 +29,4 @@ The original Phase 1 build is **done and working**. Read `README.md` for how it 
 6. **Mobile and desktop both have to work.** Check the layout at phone width.
 7. **Don't build deferred features:** recurrence, search, due dates/reminders, sharing, offline mode.
 8. **When finished,** give a short report: what changed (files), any migration and how to apply it, decisions you made where the prompt was silent, and anything you noticed but didn't touch.
+9. **Version & changelog:** at the end of every prompt, bump the `package.json` version (minor for features, patch for fixes only) and add a matching user-facing entry to `CHANGELOG.md`.

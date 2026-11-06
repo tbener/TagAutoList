@@ -1,8 +1,20 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { LogOut } from "lucide-react";
 import { signOut } from "@/auth";
 import { AppRoot } from "@/components/app-root";
+import { parseChangelog } from "@/lib/changelog";
 import { getSnapshot } from "@/lib/data";
 import { requireUser } from "@/lib/session";
+
+/** CHANGELOG.md is read on the server and handed to the client; there is no runtime fetch. */
+function loadReleases() {
+  try {
+    return parseChangelog(readFileSync(path.join(process.cwd(), "CHANGELOG.md"), "utf8"));
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Loads everything the user owns once and hands it to the client, which then
@@ -17,6 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppRoot
       initial={snap}
+      releases={loadReleases()}
       footer={
         <form
           action={async () => {

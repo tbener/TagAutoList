@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
-import { Button } from "@/components/ui";
+import { GoogleButton } from "@/components/google-button";
 
 export const metadata = { title: "Sign in" };
 
@@ -19,9 +19,7 @@ export default async function SignInPage() {
             await signIn("google", { redirectTo: "/" });
           }}
         >
-          <Button type="submit" className="w-full">
-            Continue with Google
-          </Button>
+          <GoogleButton />
         </form>
       </div>
     </main>
