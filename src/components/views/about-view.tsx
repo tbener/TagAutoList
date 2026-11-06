@@ -29,7 +29,7 @@ const HOW: { icon: ReactNode; title: string; text: string }[] = [
   {
     icon: <Copy size={20} />,
     title: "Duplicating a list",
-    text: "Use the \⋯ menu next to a list's title to copy it, with everything still to do, into a new list.",
+    text: "Use the ⋯ menu next to a list's title to copy it, with everything still to do, into a new list.",
   },
 ];
 
