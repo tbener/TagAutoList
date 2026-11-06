@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TagAutoList — facelift directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Figtree:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500;600&family=Manrope:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500&display=swap" rel="stylesheet">
+<style>
+  :root { --page:#ececec; --pagefg:#222; }
+  body.dark { --page:#0d0d0d; --pagefg:#eee; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--page); color:var(--pagefg); font:15px/1.5 system-ui, sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .lede { max-width:70ch; margin:0 0 20px; opacity:.8; }
+  .toggle { position:sticky; top:8px; z-index:5; display:inline-flex; gap:6px; padding:6px; border-radius:999px; background:#fff; box-shadow:0 2px 10px #0003; margin-bottom:24px; }
+  body.dark .toggle { background:#222; }
+  .toggle button { border:0; border-radius:999px; padding:8px 16px; font:inherit; font-weight:600; cursor:pointer; background:transparent; color:inherit; }
+  .toggle button.on { background:#222; color:#fff; } body.dark .toggle button.on { background:#eee; color:#111; }
+  section.dir { margin:0 0 56px; padding:24px; border-radius:24px; background:var(--bg); color:var(--fg); border:1px solid var(--border); }
+  section.dir h2 { margin:0; font-family:var(--head); font-size:30px; font-weight:var(--headw); letter-spacing:var(--headls); }
+  .tag { display:inline-block; margin-left:10px; padding:2px 10px; border-radius:999px; font:600 12px var(--body); background:var(--accent); color:var(--accent-fg); vertical-align:middle; }
+  .mood { margin:6px 0 18px; font-family:var(--body); color:var(--muted); max-width:70ch; }
+  .grid { display:grid; grid-template-columns: 1fr; gap:28px; }
+  @media (min-width: 980px) { .grid { grid-template-columns: 1.05fr 1fr 1fr; align-items:start; } }
+  .spec { font-family:var(--body); font-size:14px; }
+  .spec h3 { margin:16px 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .spec h3:first-child { margin-top:0; }
+  .sw { display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; }
+  .sw div { border-radius:10px; padding:26px 6px 6px; font:11px/1.25 ui-monospace, monospace; border:1px solid var(--border); }
+  .sw b { display:block; font-family:var(--body); font-size:11px; }
+  .spec ul { margin:0; padding-left:18px; } .spec li { margin:2px 0; }
+  .type-h { font-family:var(--head); font-weight:var(--headw); font-size:26px; letter-spacing:var(--headls); line-height:1.15; }
+  .type-b { font-family:var(--body); font-size:15px; }
+  /* ---- phone mock ---- */
+  .phone { width:100%; max-width:340px; margin:0 auto; border-radius:34px; border:8px solid #1a1a1a; background:var(--bg); overflow:hidden; font-family:var(--body); color:var(--fg); box-shadow:0 14px 40px #0004; }
+  .screen { padding:16px 14px 14px; min-height:560px; position:relative; }
+  .bar { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:10px; }
+  .title { font-family:var(--head); font-weight:var(--headw); letter-spacing:var(--headls); font-size:var(--titlesz); line-height:1.1; margin:6px 2px 14px; color:var(--titlecolor); }
+  .rows { background:var(--card); border:1px solid var(--border); border-radius:var(--rad); overflow:hidden; box-shadow:var(--shadow); }
+  .row { display:flex; align-items:center; gap:12px; padding:14px; border-bottom:1px solid var(--border); font-weight:500; }
+  .row:last-child { border-bottom:0; }
+  .dot { width:12px; height:12px; border-radius:50%; flex:none; background:var(--c); }
+  .count { margin-left:auto; font-size:12px; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--accent-soft); color:var(--accent); }
+  .grip { color:var(--muted); letter-spacing:-2px; font-size:14px; }
+  .newlist { margin-top:12px; padding:13px; border-radius:var(--rad); text-align:center; font-weight:600; color:var(--accent); background:var(--accent-soft); }
+  .chips { display:flex; gap:7px; overflow:hidden; margin:0 0 12px; }
+  .chip { flex:none; padding:7px 12px; border-radius:999px; font-size:13px; font-weight:600; border:1.5px dashed var(--accent); color:var(--accent); background:var(--accent-soft); }
+  .chip.sel { border:0; background:var(--accent); color:var(--accent-fg); }
+  .card { display:flex; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:var(--rad); padding:13px; margin-bottom:10px; box-shadow:var(--shadow); }
+  .check { width:26px; height:26px; border-radius:50%; border:2px solid var(--muted); opacity:.7; flex:none; margin-top:1px; }
+  .check.done { background:var(--accent); border-color:var(--accent); opacity:1; display:grid; place-items:center; color:var(--accent-fg); font-size:14px; }
+  .it { font-weight:500; font-size:16px; }
+  .it.done { text-decoration:line-through; color:var(--muted); }
+  .tags { display:flex; gap:6px; margin-top:7px; flex-wrap:wrap; }
+  .tg { display:inline-flex; align-items:center; gap:5px; padding:3px 9px 3px 7px; border-radius:var(--chiprad); font-size:12px; font-weight:600; background:color-mix(in srgb, var(--c) 16%, var(--card)); color:var(--fg); }
+  .tg i { width:7px; height:7px; border-radius:50%; background:var(--c); display:block; }
+  .drag { transform:rotate(-1.2deg) scale(1.02); box-shadow:var(--lift); border-color:var(--accent); }
+  .add { position:absolute; left:12px; right:12px; bottom:12px; display:flex; gap:8px; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:999px; padding:9px 9px 9px 16px; color:var(--muted); box-shadow:var(--lift); }
+  .add b { margin-left:auto; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:var(--accent); color:var(--accent-fg); font-size:20px; font-weight:500; }
+  .cap { text-align:center; font:600 12px var(--body); color:var(--muted); margin-top:8px; }
+
+  /* ========== themes ========== */
+  .ember { --head:'Fraunces',serif; --body:'Figtree',sans-serif; --headw:600; --headls:-.01em; --rad:16px; --chiprad:8px; --titlesz:34px;
+    --bg:#F7F1E8; --card:#FFFDF8; --fg:#2A211C; --muted:#7A6B60; --border:#E6DACB; --accent:#B84A2A; --accent-soft:#F6E1D6; --accent-fg:#fff; --titlecolor:#2A211C;
+    --shadow:0 1px 0 #e6dacb, 0 6px 14px -8px #7a4a2a33; --lift:0 14px 28px -10px #7a4a2a66; --c1:#B84A2A; --c2:#C9902B; --c3:#5E7F4F; --c4:#3F7C85; --c5:#8A5A8C; }
+  .ember.dk { --bg:#1C1815; --card:#26201C; --fg:#F1E9DF; --muted:#A39587; --border:#3A312B; --accent:#E8805C; --accent-soft:#3B2A22; --accent-fg:#1C1815; --titlecolor:#F1E9DF;
+    --shadow:0 1px 0 #00000055; --lift:0 14px 28px -8px #000a; --c1:#E8805C; --c2:#E2B04F; --c3:#8DB07A; --c4:#6DB4BE; --c5:#C595C7; }
+  .moss { --head:'Bricolage Grotesque',sans-serif; --body:'DM Sans',sans-serif; --headw:700; --headls:-.02em; --rad:22px; --chiprad:999px; --titlesz:34px;
+    --bg:#F2F5F0; --card:#FFFFFF; --fg:#1D2B24; --muted:#66756D; --border:#DCE4DC; --accent:#2F7A58; --accent-soft:#DDEEE4; --accent-fg:#fff; --titlecolor:#1D2B24;
+    --shadow:0 2px 10px -4px #1d2b2422; --lift:0 16px 30px -12px #1d2b2455; --c1:#2F7A58; --c2:#E2725B; --c3:#D9A441; --c4:#4C8DB0; --c5:#8B6BB5; }
+  .moss.dk { --bg:#121A16; --card:#1B2520; --fg:#E6EFE9; --muted:#94A59C; --border:#2A3830; --accent:#6FCF9F; --accent-soft:#1F3A2E; --accent-fg:#0F1713; --titlecolor:#E6EFE9;
+    --shadow:none; --lift:0 16px 30px -10px #000b; --c1:#6FCF9F; --c2:#F0907B; --c3:#E8BE62; --c4:#78B6D6; --c5:#B79CDC; }
+  .plum { --head:'Manrope',sans-serif; --body:'Manrope',sans-serif; --headw:800; --headls:-.025em; --rad:12px; --chiprad:6px; --titlesz:30px;
+    --bg:#F6F2F5; --card:#FFFFFF; --fg:#261B2B; --muted:#75687A; --border:#E5DCE6; --accent:#6B3F7F; --accent-soft:#EDE1F1; --accent-fg:#fff; --titlecolor:#6B3F7F;
+    --shadow:0 1px 2px #261b2b14; --lift:0 18px 34px -14px #261b2b66; --c1:#6B3F7F; --c2:#E08A2E; --c3:#2C8C7A; --c4:#C2456B; --c5:#4B64B5; }
+  .plum.dk { --bg:#17111A; --card:#211925; --fg:#F0E8F2; --muted:#A798AD; --border:#35293A; --accent:#C79BDB; --accent-soft:#33223A; --accent-fg:#17111A; --titlecolor:#C79BDB;
+    --shadow:none; --lift:0 18px 34px -12px #000c; --c1:#C79BDB; --c2:#F0A957; --c3:#5CC2AE; --c4:#EE7C9C; --c5:#8CA2EE; }
+  .plum .title em { font-family:'Newsreader',serif; font-style:italic; font-weight:500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TagAutoList — three visual directions</h1>
+  <p class="lede">Prompt 07, step 1. Same two screens (Home, and a list drilled into “Shopping”) in three identities. Toggle light/dark below. Every direction gives each list its own small colour, so “this item lives in several lists” reads at a glance as 2–3 coloured chips on the row. Fonts load from Google Fonts for this preview only.</p>
+  <div class="toggle" role="group" aria-label="Theme"><button id="bl" class="on">Light</button><button id="bd">Dark</button></div>
+  <div id="out"></div>
+</div>
+
+<script>
+const D = [
+  { cls:'ember', name:'Paper & Ember', badge:'Recommended',
+    mood:'A warm paper notebook: cream pages, soft serif titles and one ember-orange accent. Personal, analog, calm — the opposite of a corporate task tool.',
+    pal:[['bg','#F7F1E8','#1C1815'],['card','#FFFDF8','#26201C'],['ink','#2A211C','#F1E9DF'],['muted','#7A6B60','#A39587'],['border','#E6DACB','#3A312B'],['accent (ember)','#B84A2A','#E8805C'],['accent-soft','#F6E1D6','#3B2A22'],['danger','#B3261E','#F2877F']],
+    list:['#B84A2A ember','#C9902B ochre','#5E7F4F sage','#3F7C85 teal','#8A5A8C mauve'],
+    type:['Titles: <b>Fraunces</b> 600, tight tracking (-0.01em)','Body &amp; UI: <b>Figtree</b> 400/500/600','Scale (rem @16px): 2.1 page title · 1.06 task · 0.9 meta/chips · 0.75 counts','Line-height 1.5 body, 1.15 titles'],
+    shape:['Radius 16px cards, 8px square-ish tag chips (like paper tabs), pill add-bar','1px warm hairline borders + a faint paper-fold shadow','Spacing 4/8/12/16/24; 44px+ tap targets'],
+    icon:['Lucide, 1.75px stroke, rounded caps','Completion: the circle fills with ember and the title strikes through with a quick pen-stroke','Drag: card lifts, tilts 1°, casts a warm shadow','Empty state: a hand-drawn-style sprout line illustration'] },
+  { cls:'moss', name:'Moss & Mist', badge:'',
+    mood:'A quiet greenhouse: misty sage backgrounds, deep moss accent, big friendly rounded shapes and a playful grotesque for titles. Soft and breathable.',
+    pal:[['bg','#F2F5F0','#121A16'],['card','#FFFFFF','#1B2520'],['ink','#1D2B24','#E6EFE9'],['muted','#66756D','#94A59C'],['border','#DCE4DC','#2A3830'],['accent (moss)','#2F7A58','#6FCF9F'],['accent-soft','#DDEEE4','#1F3A2E'],['danger','#C0392B','#F28B7F']],
+    list:['#2F7A58 moss','#E2725B coral','#D9A441 honey','#4C8DB0 sky','#8B6BB5 iris'],
+    type:['Titles: <b>Bricolage Grotesque</b> 700, -0.02em','Body &amp; UI: <b>DM Sans</b> 400/500/600','Scale (rem @16px): 2.1 page title · 1.06 task · 0.9 meta · 0.75 counts','Line-height 1.5 body, 1.1 titles'],
+    shape:['Radius 22px cards, fully pill tag chips and add-bar','Almost no borders: soft tinted surfaces and diffuse shadows','Generous spacing; 48px rows on phone'],
+    icon:['Lucide, 2px stroke, rounded','Completion: circle pops with a tiny leaf-burst of 5 dots, row fades and slides away','Drag: card floats up with a big soft shadow, neighbours part smoothly','Empty state: a stack of pebbles / leaf illustration'] },
+  { cls:'plum', name:'Plum Dusk', badge:'',
+    mood:'Evening, modern and a little editorial: aubergine accent, crisp white cards, apricot highlights and a touch of italic serif for personality. Focused and slightly luxe.',
+    pal:[['bg','#F6F2F5','#17111A'],['card','#FFFFFF','#211925'],['ink','#261B2B','#F0E8F2'],['muted','#75687A','#A798AD'],['border','#E5DCE6','#35293A'],['accent (plum)','#6B3F7F','#C79BDB'],['accent-soft','#EDE1F1','#33223A'],['danger','#B3261E','#F2877F']],
+    list:['#6B3F7F plum','#E08A2E apricot','#2C8C7A jade','#C2456B berry','#4B64B5 indigo'],
+    type:['Titles &amp; UI: <b>Manrope</b> 800 titles / 500–600 body','Accent: <b>Newsreader</b> italic for page-title flourishes and empty states','Scale (rem @16px): 1.9 page title · 1.0 task · 0.88 meta · 0.75 counts','Line-height 1.5 body, 1.1 titles'],
+    shape:['Radius 12px, 6px square tag chips, pill add-bar','Crisp hairlines, flat cards; elevation only when dragging or in sheets','Tighter, denser rhythm — good on desktop'],
+    icon:['Lucide, 1.5px stroke (lighter, more refined)','Completion: ring draws itself in apricot, then the row collapses','Drag: card snaps sharp with a crisp shadow and accent outline','Empty state: minimal geometric tag-shape illustration'] },
+];
+
+function phoneHome(d, dk) {
+  const lists=[['Shopping',7,1],['Kid One',4,2],['Kid Two',3,3],['Work',9,4],['Home',5,5]];
+  return `<div class="phone ${d.cls} ${dk?'dk':''}"><div class="screen">
+    <div class="bar"><span>9:41</span><span>●●●</span></div>
+    <div class="title">${d.cls==='plum'?'Your <em>lists</em>':'Lists'}</div>
+    <div class="rows">${lists.map(l=>`<div class="row"><span class="dot" style="--c:var(--c${l[2]})"></span>${l[0]}<span class="count">${l[1]}</span><span class="grip">⋮⋮</span></div>`).join('')}</div>
+    <div class="newlist">＋ New list</div>
+  </div><div class="cap" style="background:var(--bg)">Home</div></div>`;
+}
+function phoneList(d, dk) {
+  const tg=(n,c)=>`<span class="tg" style="--c:var(--c${c})"><i></i>${n}</span>`;
+  return `<div class="phone ${d.cls} ${dk?'dk':''}"><div class="screen">
+    <div class="bar"><span>9:41</span><span>●●●</span></div>
+    <div class="title">Shopping</div>
+    <div class="chips"><span class="chip sel">Shopping ✕</span><span class="chip">＋ Kid One 2</span><span class="chip">＋ Home 1</span></div>
+    <div class="card"><span class="check"></span><div><div class="it">Chair for the kids’ room</div><div class="tags">${tg('Shopping',1)}${tg('Kid One',2)}</div></div></div>
+    <div class="card drag"><span class="check"></span><div><div class="it">Light bulbs</div><div class="tags">${tg('Shopping',1)}${tg('Home',5)}</div></div></div>
+    <div class="card"><span class="check done">✓</span><div><div class="it done">Milk</div><div class="tags">${tg('Shopping',1)}</div></div></div>
+    <div class="card"><span class="check"></span><div><div class="it">Birthday card</div><div class="tags">${tg('Shopping',1)}${tg('Kid Two',3)}${tg('Home',5)}</div></div></div>
+    <div class="add">Add a task to Shopping… <b>＋</b></div>
+  </div><div class="cap" style="background:var(--bg)">List view (middle card mid-drag, “Milk” just completed)</div></div>`;
+}
+function spec(d) {
+  return `<div class="spec">
+    <h3>Palette — light / dark</h3>
+    <div class="sw">${d.pal.map(p=>`<div style="background:${p[1]};color:${isDark(p[1])?'#fff':'#111'}"><b>${p[0]}</b>${p[1]}</div>`).join('')}</div>
+    <div class="sw" style="margin-top:6px">${d.pal.map(p=>`<div style="background:${p[2]};color:${isDark(p[2])?'#fff':'#111'}"><b>${p[0]}</b>${p[2]}</div>`).join('')}</div>
+    <h3>List colours (shown as dots / tag tints)</h3><ul>${d.list.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <h3>Typography</h3><div class="type-h">Shopping list</div><div class="type-b">Chair for the kids’ room — Kid One, Shopping</div><ul style="margin-top:8px">${d.type.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <h3>Shape, spacing, elevation</h3><ul>${d.shape.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <h3>Iconography &amp; motion</h3><ul>${d.icon.map(x=>`<li>${x}</li>`).join('')}</ul>
+  </div>`;
+}
+function isDark(hex){const n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return (0.2126*r+0.7152*g+0.0722*b)<140}
+function render(dk){
+  document.getElementById('out').innerHTML = D.map((d,i)=>`
+    <section class="dir ${d.cls} ${dk?'dk':''}">
+      <h2>${i+1}. ${d.name}${d.badge?`<span class="tag">${d.badge}</span>`:''}</h2>
+      <p class="mood">${d.mood}</p>
+      <div class="grid">${spec(d)}${phoneHome(d,dk)}${phoneList(d,dk)}</div>
+    </section>`).join('');
+}
+let dk=false; render(dk);
+const set=v=>{dk=v;document.body.classList.toggle('dark',v);bl.classList.toggle('on',!v);bd.classList.toggle('on',v);render(v)};
+bl.onclick=()=>set(false); bd.onclick=()=>set(true);
+</script>
+</body>
+</html>
