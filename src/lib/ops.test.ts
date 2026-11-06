@@ -189,6 +189,93 @@ describe("ops", () => {
     expect(ops.addTagToItem(s, "ghost", shop.id)).toBe(s);
   });
 
+  describe("duplicateList", () => {
+    // Shopping: Chair (+Kid One), Table, Lamp (+Kid One, but done there), Old (done); Kid One: Chair
+    function shopping() {
+      let s = empty();
+      const refs = (names: string[]) => ops.resolveRefs(s, names, newId);
+      s = ops.addItem(s, { id: "old", title: "Old", refs: refs(["Shopping"]), now });
+      s = ops.addItem(s, { id: "lamp", title: "Lamp", refs: refs(["Shopping", "Kid One"]), now });
+      s = ops.addItem(s, { id: "table", title: "Table", refs: refs(["Shopping"]), now });
+      s = ops.addItem(s, { id: "chair", title: "Chair", refs: refs(["Shopping", "Kid One"]), now });
+      s = ops.updateItem(s, {
+        id: "chair",
+        title: "Chair",
+        notes: "red",
+        refs: refs(["Shopping", "Kid One"]),
+      });
+      const shop = s.tags.find((t) => t.name === "Shopping")!;
+      const kid = s.tags.find((t) => t.name === "Kid One")!;
+      s = ops.completeItem(s, "old", [shop.id], now);
+      s = ops.completeItem(s, "lamp", [kid.id], now);
+      return { s, shop, kid };
+    }
+    const dup = (s: Snapshot, tagId: string, newTagId = "copy1") =>
+      ops.duplicateList(s, {
+        tagId,
+        newTagId,
+        idFor: (id) => `${id}-copy`,
+        now: new Date(2026, 6, 1),
+      });
+    const titles = (s: Snapshot, tagId: string) => browse(s, [tagId]).items.map((i) => i.title);
+
+    it("copies only incomplete items, in order, into a new top list; the original is untouched", () => {
+      const { s, shop } = shopping();
+      const d = dup(s, shop.id);
+      expect(d.tags.find((t) => t.id === "copy1")!.name).toBe("Shopping - copy");
+      expect(sortTags(d.tags)[0].id).toBe("copy1");
+      expect(titles(d, "copy1")).toEqual(["Chair", "Table", "Lamp"]); // no "Old"
+      expect(d.items.find((i) => i.id === "chair-copy")).toMatchObject({
+        title: "Chair",
+        notes: "red",
+        createdAt: new Date(2026, 6, 1),
+      });
+      expect(titles(d, shop.id)).toEqual(["Chair", "Table", "Lamp"]);
+      expect(d.links.filter((l) => l.tagId === shop.id)).toEqual(
+        s.links.filter((l) => l.tagId === shop.id),
+      );
+    });
+
+    it("copies are separate items that join the other active lists, not the original list", () => {
+      const { s, shop } = shopping();
+      const d = dup(s, shop.id);
+      const chair = activeItems(d).find((i) => i.id === "chair-copy")!;
+      expect(chair.tags.map((t) => t.name).sort()).toEqual(["Kid One", "Shopping - copy"]);
+      expect(d.links.some((l) => l.itemId === "chair-copy" && l.tagId === shop.id)).toBe(false);
+      // Lamp is completed in Kid One, so its copy is only in the new list
+      expect(activeItems(d).find((i) => i.id === "lamp-copy")!.tags.map((t) => t.name)).toEqual([
+        "Shopping - copy",
+      ]);
+      expect(d.items.some((i) => i.id === "old-copy")).toBe(false);
+    });
+
+    it("places each copy directly after its original in the other lists", () => {
+      const { s, shop, kid } = shopping();
+      expect(browse(s, [kid.id]).items.map((i) => i.id)).toEqual(["chair"]);
+      const d = dup(s, shop.id);
+      expect(browse(d, [kid.id]).items.map((i) => i.id)).toEqual(["chair", "chair-copy"]);
+    });
+
+    it("uses '- copy 2', '- copy 3' when the name is taken, case-insensitively", () => {
+      const { s, shop } = shopping();
+      const d1 = dup(s, shop.id, "c1");
+      const d2 = dup(d1, shop.id, "c2");
+      expect(d2.tags.find((t) => t.id === "c2")!.name).toBe("Shopping - copy 2");
+      const d3 = ops.renameTag(d2, "c2", "SHOPPING - COPY 2");
+      expect(dup(d3, shop.id, "c3").tags.find((t) => t.id === "c3")!.name).toBe("Shopping - copy 3");
+      expect(ops.copyName([], "A")).toBe("A - copy");
+    });
+
+    it("is a no-op for an unknown list and works for an empty one", () => {
+      const { s } = shopping();
+      expect(dup(s, "nope")).toBe(s);
+      const withEmpty = ops.addTag(s, { id: "e", name: "Empty" });
+      const d = dup(withEmpty, "e");
+      expect(d.tags.find((t) => t.id === "copy1")!.name).toBe("Empty - copy");
+      expect(d.items).toEqual(withEmpty.items);
+    });
+  });
+
   it("restoreCompletion reactivates", () => {
     const s = seeded();
     const kid = s.tags[1].id;

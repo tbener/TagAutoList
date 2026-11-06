@@ -7,11 +7,20 @@ import { AddItemForm } from "../add-item-form";
 import { SortableLists } from "../dnd";
 import { FilterBar } from "../filter-bar";
 import { ItemRow } from "../item-row";
-import { ListActions } from "../list-forms";
+import { ListHeader } from "../list-forms";
 import { NavLink, navigate } from "../nav-link";
 import { useData } from "../store";
 
-export function BrowseView({ ids, focus }: { ids: string[]; focus: boolean }) {
+export function BrowseView({
+  ids,
+  focus,
+  rename,
+}: {
+  ids: string[];
+  focus: boolean;
+  /** Land with the title in rename mode (right after duplicating a list). */
+  rename: boolean;
+}) {
   const { snap } = useData();
 
   const idKey = ids.join(",");
@@ -38,6 +47,12 @@ export function BrowseView({ ids, focus }: { ids: string[]; focus: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snap, pathKey]);
 
+  // The rename hint only applies to the first render after duplicating; drop it from the URL.
+  useEffect(() => {
+    if (rename) navigate(browseHref(path), { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!view) return null;
 
   const byId = new Map(snap.tags.map((t) => [t.id, t]));
@@ -61,10 +76,7 @@ export function BrowseView({ ids, focus }: { ids: string[]; focus: boolean }) {
             ))}
           </nav>
         )}
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="truncate text-3xl font-bold tracking-tight text-accent">{last.name}</h1>
-          <ListActions key={last.id} list={last} />
-        </div>
+        <ListHeader key={last.id} list={last} startRenaming={rename} />
       </div>
 
       <AddItemForm

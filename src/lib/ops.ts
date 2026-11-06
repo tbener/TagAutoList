@@ -195,6 +195,80 @@ export function reorderTags(snap: Snapshot, orderedIds: string[]): Snapshot {
   return { ...snap, tags: snap.tags.map((t) => ({ ...t, position: index.get(t.id)! })) };
 }
 
+/** "<name> - copy", or "- copy 2", "- copy 3"… when that name is taken (case-insensitive). */
+export function copyName(tags: Tag[], base: string): string {
+  const taken = new Set(tags.map((t) => t.name.toLowerCase()));
+  let name = `${base} - copy`;
+  for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${base} - copy ${n}`;
+  return name;
+}
+
+/**
+ * Duplicate a list: a new tag (on top, named by `copyName`) holding *new* items
+ * copied from the original's currently active items, in the same order. Each
+ * copy also joins every other list its original is still active in (placed
+ * directly after the original there). The original tag is not added to the
+ * copies, completed associations aren't copied, and nothing links a copy to
+ * its original. `idFor` supplies the new item ids (client-generated).
+ */
+export function duplicateList(
+  snap: Snapshot,
+  p: { tagId: string; newTagId: string; idFor: (srcItemId: string) => string; now: Date },
+): Snapshot {
+  const src = snap.tags.find((t) => t.id === p.tagId);
+  if (!src) return snap;
+  const itemById = new Map(snap.items.map((i) => [i.id, i]));
+  const order = orderedTagLinks(snap, p.tagId)
+    .filter((l) => !l.completedAt && itemById.has(l.itemId))
+    .map((l) => l.itemId);
+  const copyOf = new Map(order.map((id) => [id, p.idFor(id)]));
+
+  const tags = withNewTagOnTop(snap.tags, { id: p.newTagId, name: copyName(snap.tags, src.name) });
+  const items = [
+    ...snap.items,
+    ...order.map((id) => {
+      const orig = itemById.get(id)!;
+      return { id: copyOf.get(id)!, title: orig.title, notes: orig.notes, createdAt: p.now };
+    }),
+  ];
+
+  let links: Link[] = [
+    ...snap.links,
+    ...order.map((id, position) => ({
+      itemId: copyOf.get(id)!,
+      tagId: p.newTagId,
+      completedAt: null,
+      position,
+    })),
+  ];
+
+  // The other lists the originals are active in: slot each copy in right after its original.
+  const others = new Set<string>();
+  for (const l of snap.links)
+    if (copyOf.has(l.itemId) && !l.completedAt && l.tagId !== p.tagId) others.add(l.tagId);
+  for (const tagId of others) {
+    const sequence: string[] = [];
+    for (const l of orderedTagLinks(snap, tagId)) {
+      sequence.push(l.itemId);
+      if (copyOf.has(l.itemId) && !l.completedAt) sequence.push(copyOf.get(l.itemId)!);
+    }
+    const index = new Map(sequence.map((id, i) => [id, i]));
+    links = links.map((l) =>
+      l.tagId === tagId && index.has(l.itemId) ? { ...l, position: index.get(l.itemId)! } : l,
+    );
+    for (const l of snap.links) {
+      if (l.tagId === tagId && copyOf.has(l.itemId) && !l.completedAt)
+        links.push({
+          itemId: copyOf.get(l.itemId)!,
+          tagId,
+          completedAt: null,
+          position: index.get(copyOf.get(l.itemId)!)!,
+        });
+    }
+  }
+  return { tags, items, links };
+}
+
 export function renameTag(snap: Snapshot, id: string, name: string): Snapshot {
   return { ...snap, tags: snap.tags.map((t) => (t.id === id ? { ...t, name } : t)) };
 }

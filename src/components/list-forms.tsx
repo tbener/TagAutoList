@@ -1,7 +1,7 @@
 "use client";
 
-import { History, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Copy, History, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, navigate } from "./nav-link";
 import { useData } from "./store";
 import { Button, Input, Modal } from "./ui";
@@ -60,13 +60,85 @@ export function NewListButton() {
   );
 }
 
-/** History / rename / delete for the list being viewed. */
-export function ListActions({ list }: { list: { id: string; name: string } }) {
+/**
+ * The list title with inline rename: click the pencil (or land here right after
+ * duplicating) and the title becomes a field with its whole text selected.
+ * Enter or blur saves, Escape keeps the current name.
+ */
+export function ListHeader({
+  list,
+  startRenaming = false,
+}: {
+  list: { id: string; name: string };
+  startRenaming?: boolean;
+}) {
   const data = useData();
-  const [renaming, setRenaming] = useState(false);
+  const [editing, setEditing] = useState(startRenaming);
+  const [value, setValue] = useState(list.name);
+  const input = useRef<HTMLInputElement>(null);
+  const finished = useRef(false);
+
+  useEffect(() => {
+    if (!editing) return;
+    finished.current = false;
+    input.current?.focus();
+    input.current?.select();
+  }, [editing]);
+
+  function startEditing() {
+    setValue(list.name);
+    setEditing(true);
+  }
+
+  function finish(save: boolean) {
+    if (finished.current) return;
+    finished.current = true;
+    setEditing(false);
+    const name = value.trim();
+    if (!save || !name || name === list.name) return;
+    const res = data.renameTag(list.id, name);
+    if (res.error) data.flash(res.error);
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3">
+      {editing ? (
+        <input
+          ref={input}
+          value={value}
+          maxLength={60}
+          aria-label="List name"
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={() => finish(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") finish(true);
+            else if (e.key === "Escape") finish(false);
+          }}
+          className="min-w-0 flex-1 rounded-lg border border-accent bg-card px-2 py-0.5 text-3xl font-bold tracking-tight text-accent outline-none ring-2 ring-accent/25"
+        />
+      ) : (
+        <h1
+          className="min-w-0 flex-1 cursor-text truncate text-3xl font-bold tracking-tight text-accent"
+          onDoubleClick={startEditing}
+        >
+          {list.name}
+        </h1>
+      )}
+      <ListActions key={list.id} list={list} onRename={startEditing} />
+    </div>
+  );
+}
+
+/** History / rename / delete for the list being viewed. */
+function ListActions({
+  list,
+  onRename,
+}: {
+  list: { id: string; name: string };
+  onRename: () => void;
+}) {
+  const data = useData();
   const [deleting, setDeleting] = useState(false);
-  const [name, setName] = useState(list.name);
-  const [error, setError] = useState("");
 
   const iconBtn = "rounded-xl p-2.5 text-muted hover:bg-accent-soft hover:text-fg";
 
@@ -85,11 +157,7 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
         aria-label="Rename list"
         title="Rename"
         className={iconBtn}
-        onClick={() => {
-          setName(list.name);
-          setError("");
-          setRenaming(true);
-        }}
+        onClick={onRename}
       >
         <Pencil size={20} />
       </button>
@@ -102,29 +170,7 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
       >
         <Trash2 size={20} />
       </button>
-
-      <Modal open={renaming} onOpenChange={setRenaming} title="Rename list">
-        <form
-          className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const res = data.renameTag(list.id, name);
-            if (res.error) setError(res.error);
-            else setRenaming(false);
-          }}
-        >
-          <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} aria-label="List name" />
-          {error && <p className="text-sm text-danger">{error}</p>}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setRenaming(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!name.trim()}>
-              Save
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      <MoreMenu list={list} />
 
       <Modal
         open={deleting}
@@ -148,6 +194,63 @@ export function ListActions({ list }: { list: { id: string; name: string } }) {
           </Button>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+/** The "⋯" menu next to the list title. */
+function MoreMenu({ list }: { list: { id: string; name: string } }) {
+  const data = useData();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+
+  return (
+    <div ref={root} className="relative">
+      <button
+        type="button"
+        aria-label="More actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="More"
+        className="rounded-xl p-2.5 text-muted hover:bg-accent-soft hover:text-fg"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <MoreHorizontal size={20} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-card p-1 shadow-lg"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-accent-soft"
+            onClick={() => {
+              setOpen(false);
+              const res = data.duplicateList(list.id);
+              if (res.id) navigate(`/browse?t=${res.id}&rename=1`);
+              else if (res.error) data.flash(res.error);
+            }}
+          >
+            <Copy size={18} className="text-muted" /> Duplicate list
+          </button>
+        </div>
+      )}
     </div>
   );
 }

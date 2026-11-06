@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { db, type Tx } from "@/db";
 import { itemTags, items, tags } from "@/db/schema";
 import { getSnapshot } from "@/lib/data";
+import * as ops from "@/lib/ops";
 import { cleanName } from "@/lib/names";
 import type { Snapshot } from "@/lib/tree";
 
@@ -162,6 +163,80 @@ export async function reorderTags(orderedIds: string[]): Promise<Result> {
       from (values ${values}) as v(id, pos)
       where tags.id = v.id and tags.user_id = ${uid}`);
   });
+  return resync ? { resync } : {};
+}
+
+/**
+ * Duplicate a list in one transaction. The same pure op the client ran
+ * (`ops.duplicateList`) is applied to the user's data as the server sees it,
+ * and the difference is written. `expectedName` is what the client showed; if
+ * the server ends up with another name, the client is asked to resync.
+ */
+export async function duplicateList(
+  tagId: string,
+  newTagId: string,
+  itemIds: Record<string, string>,
+  expectedName: string,
+): Promise<Result> {
+  const uid = await userId();
+  let resync = false;
+  try {
+    await db.transaction(async (tx) => {
+      await ownedTag(tx, uid, tagId);
+      const tagRows = await tx
+        .select({ id: tags.id, name: tags.name, position: tags.position })
+        .from(tags)
+        .where(eq(tags.userId, uid));
+      const itemRows = await tx
+        .select({ id: items.id, title: items.title, notes: items.notes, createdAt: items.createdAt })
+        .from(items)
+        .where(eq(items.userId, uid));
+      const linkRows = tagRows.length
+        ? await tx.select().from(itemTags).where(inArray(itemTags.tagId, tagRows.map((t) => t.id)))
+        : [];
+      const before: Snapshot = { tags: tagRows, items: itemRows, links: linkRows };
+      const after = ops.duplicateList(before, {
+        tagId,
+        newTagId,
+        idFor: (id) => itemIds[id] ?? crypto.randomUUID(),
+        now: new Date(),
+      });
+      const newTag = after.tags.find((t) => !before.tags.some((b) => b.id === t.id));
+      if (!newTag) return;
+      if (newTag.name !== expectedName || !UUID.test(newTagId)) resync = true;
+
+      await tx
+        .insert(tags)
+        .values({ ...idField(newTag.id), userId: uid, name: newTag.name, position: newTag.position });
+      const knownItems = new Set(before.items.map((i) => i.id));
+      const newItems = after.items.filter((i) => !knownItems.has(i.id));
+      if (newItems.length)
+        await tx
+          .insert(items)
+          .values(newItems.map((i) => ({ id: i.id, userId: uid, title: i.title, notes: i.notes })));
+      const key = (l: { itemId: string; tagId: string }) => `${l.itemId}:${l.tagId}`;
+      const old = new Map(before.links.map((l) => [key(l), l]));
+      const newLinks = after.links.filter((l) => !old.has(key(l)));
+      if (newLinks.length)
+        await tx
+          .insert(itemTags)
+          .values(newLinks.map((l) => ({ itemId: l.itemId, tagId: l.tagId, position: l.position })));
+      // Existing associations that moved over (to make room for copies in other lists).
+      const moved = after.links.filter((l) => old.has(key(l)) && old.get(key(l))!.position !== l.position);
+      if (moved.length) {
+        const values = sql.join(
+          moved.map((l) => sql`(${l.itemId}::uuid, ${l.tagId}::uuid, ${l.position}::integer)`),
+          sql`, `,
+        );
+        await tx.execute(sql`
+          update item_tags set position = v.pos
+          from (values ${values}) as v(item_id, tag_id, pos)
+          where item_tags.item_id = v.item_id and item_tags.tag_id = v.tag_id`);
+      }
+    });
+  } catch {
+    return { error: "Couldn’t duplicate the list.", resync: true };
+  }
   return resync ? { resync } : {};
 }
 

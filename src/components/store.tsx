@@ -27,6 +27,8 @@ type Store = {
   addTag(name: string): Result;
   renameTag(id: string, name: string): Result;
   deleteTag(id: string): void;
+  /** Copies the list's incomplete items into a new list; returns the new list's id. */
+  duplicateList(id: string): Result;
   reorderTags(orderedIds: string[]): void;
   addItem(title: string, tagNames: string[]): Result;
   updateItem(id: string, v: { title: string; notes: string; tagNames: string[] }): Result;
@@ -182,6 +184,22 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
       deleteTag(id) {
         commit(ops.deleteTag(ref.current, id));
         save(() => api.deleteTag(id));
+      },
+
+      duplicateList(id) {
+        if (!ref.current.tags.some((t) => t.id === id)) return { error: "List not found" };
+        const newTagId = newId();
+        const itemIds: Record<string, string> = {};
+        const next = ops.duplicateList(ref.current, {
+          tagId: id,
+          newTagId,
+          idFor: (src) => (itemIds[src] = newId()),
+          now: new Date(),
+        });
+        const name = next.tags.find((t) => t.id === newTagId)!.name;
+        commit(next);
+        save(() => api.duplicateList(id, newTagId, itemIds, name));
+        return { id: newTagId };
       },
 
       reorderTags(orderedIds) {

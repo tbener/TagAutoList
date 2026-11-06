@@ -36,7 +36,13 @@ function Views() {
   const pathname = usePathname();
   const search = useSearchParams();
   if (pathname === "/browse")
-    return <BrowseView ids={search.getAll("t")} focus={search.get("focus") === "1"} />;
+    return (
+      <BrowseView
+        ids={search.getAll("t")}
+        focus={search.get("focus") === "1"}
+        rename={search.get("rename") === "1"}
+      />
+    );
   if (pathname === "/history") return <HistoryView tagId={search.get("tag")} />;
   return <HomeView />;
 }
