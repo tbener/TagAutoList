@@ -2,6 +2,11 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.11.2] — 2026-11-10
+
+### Fixed
+- Removed the database "SECURITY WARNING" about sslmode that showed up as an error in the dev console. The connection behaves exactly as before.
+
 ## [0.11.1] — 2026-11-09
 
 ### Fixed
