@@ -2,6 +2,13 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.11.1] — 2026-11-09
+
+### Fixed
+- The list suggestions when editing a task's lists are no longer cut off at the bottom of the dialog. They float above it, flip upward when there is no room below, scroll when there are many, and show every matching list.
+- You can pick a suggestion with the arrow keys and Enter, and Escape closes only the suggestions, not the dialog.
+- Hebrew list names now display and align correctly in the suggestions and chips.
+
 ## [0.11.0] — 2026-11-09
 
 ### Changed
