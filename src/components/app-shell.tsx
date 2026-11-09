@@ -1,5 +1,6 @@
 "use client";
 
+import { listStyle } from "@/lib/list-color";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronRight, Menu } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -31,12 +32,12 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
   return (
     <AppDnd>
     <div className="flex min-h-dvh">
-      <aside className="sticky top-0 hidden h-dvh w-72 shrink-0 border-r border-border bg-card md:block">
+      <aside className="glass sticky top-0 hidden h-dvh w-72 shrink-0 border-r border-border md:block">
         <Sidebar area="desk" footer={footer} path={path} />
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-card/90 px-2 backdrop-blur md:hidden">
+        <header className="glass sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border px-2 md:hidden">
           <button
             type="button"
             aria-label="Open lists"
@@ -68,7 +69,7 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
       {toast && (
         <div
           role="status"
-          className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-fg px-4 py-2.5 text-sm font-medium text-bg shadow-lg md:bottom-6"
+          className="rise fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-fg px-4 py-2.5 text-sm font-medium text-bg shadow-lg md:bottom-6"
         >
           {toast}
         </div>
@@ -76,7 +77,7 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
 
       <Dialog.Root open={drawer} onOpenChange={setDrawer}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 md:hidden" />
+          <Dialog.Overlay className="overlay-in fixed inset-0 z-40 bg-[#0a1424]/45 backdrop-blur-[2px] md:hidden" />
           <Dialog.Content
             aria-describedby={undefined}
             className="fixed inset-y-0 left-0 z-50 w-[88vw] max-w-sm bg-card shadow-xl outline-none md:hidden"
@@ -233,6 +234,7 @@ function TreeItem({
             node.selected && "font-semibold",
           )}
         >
+          <span style={listStyle(node.tag.id)} className="lc-dot size-2.5 shrink-0 rounded-full" />
           <span className="min-w-0 flex-1 truncate">{node.tag.name}</span>
           {node.count > 0 && <span className="text-xs text-muted">{node.count}</span>}
         </NavLink>

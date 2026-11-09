@@ -86,9 +86,10 @@ export function BrowseView({
       />
 
       {view.items.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border p-10 text-center text-muted">
-          Nothing to do here.
-        </p>
+        <div className="rise rounded-3xl border border-dashed border-border bg-card/60 p-10 text-center">
+          <p className="text-lg font-semibold">All clear</p>
+          <p className="mt-1 text-sm text-muted">Nothing to do here. Add a task below.</p>
+        </div>
       ) : (
         // Reordering only in a single-list view; a drilled-down view is a filtered
         // subset, so it follows the entry list's order and shows no drag affordance.

@@ -1,5 +1,6 @@
 "use client";
 
+import { listStyle } from "@/lib/list-color";
 import { Plus, X } from "lucide-react";
 import { browseHref, type SubTag, type Tag } from "@/lib/tree";
 import { NavLink } from "./nav-link";
@@ -25,7 +26,8 @@ export function FilterBar({
             <NavLink
               href={path.length > 1 ? browseHref(path.filter((id) => id !== tag.id)) : "/"}
               aria-label={`Remove ${tag.name}`}
-              className="flex items-center gap-1.5 rounded-full bg-accent py-2 pl-4 pr-3 text-[0.95rem] font-medium text-accent-fg shadow-sm"
+              style={listStyle(tag.id)}
+              className="lc-chip flex items-center gap-1.5 rounded-full py-2 pl-4 pr-3 text-[0.95rem] font-semibold shadow-sm"
             >
               {tag.name}
               <X size={16} />

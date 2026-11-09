@@ -2,6 +2,15 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.10.0] — 2026-11-09
+
+### Changed
+- New "Sky & Tangerine" look: cool blue-white with bright blue and orange.
+- Every list now has its own colour, shown on its dot, its tags on tasks, and a soft wash behind its title.
+- Checking a task off now plays a short animation. Tasks, sheets and messages ease in with a gentle spring.
+- The sidebar and top bar are frosted glass, with soft glows in the background and layered shadows on cards.
+- A friendlier empty state for lists with nothing to do.
+
 ## [0.9.0] — 2026-11-09
 
 ### Added

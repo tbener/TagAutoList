@@ -1,5 +1,6 @@
 "use client";
 
+import { listStyle } from "@/lib/list-color";
 import { Copy, History, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, navigate } from "./nav-link";
@@ -101,7 +102,11 @@ export function ListHeader({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div
+      style={listStyle(list.id)}
+      className="lc-wash -mx-4 -mt-6 flex items-center justify-between gap-3 px-4 pb-4 pt-6 md:-mx-8 md:-mt-8 md:px-8 md:pt-8"
+    >
+      <span className="lc-dot size-3.5 shrink-0 rounded-full" />
       {editing ? (
         <input
           ref={input}
@@ -114,11 +119,11 @@ export function ListHeader({
             if (e.key === "Enter") finish(true);
             else if (e.key === "Escape") finish(false);
           }}
-          className="min-w-0 flex-1 rounded-lg border border-accent bg-card px-2 py-0.5 text-3xl font-bold tracking-tight text-accent outline-none ring-2 ring-accent/25"
+          className="min-w-0 flex-1 rounded-lg border border-accent bg-card px-2 py-0.5 text-3xl font-bold tracking-tight outline-none ring-2 ring-accent/25"
         />
       ) : (
         <h1
-          className="min-w-0 flex-1 cursor-text truncate text-3xl font-bold tracking-tight text-accent"
+          className="min-w-0 flex-1 cursor-text truncate text-3xl font-bold tracking-tight"
           onDoubleClick={startEditing}
         >
           {list.name}

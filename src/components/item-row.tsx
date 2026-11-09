@@ -1,5 +1,6 @@
 "use client";
 
+import { listStyle } from "@/lib/list-color";
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useItemSortable } from "./dnd";
@@ -40,9 +41,16 @@ export function ItemRow({
   const [completing, setCompleting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [done, setDone] = useState(false);
+
   function onCheck() {
-    if (item.tags.length === 1) data.completeItem(item.id, [item.tags[0].id]);
-    else setCompleting(true);
+    if (item.tags.length !== 1) return setCompleting(true);
+    // Play the check-off animation, then complete (the store ref is stable, so
+    // this is safe even if the row unmounts in between).
+    setDone(true);
+    const { id } = item;
+    const tagId = item.tags[0].id;
+    window.setTimeout(() => data.completeItem(id, [tagId]), 380);
   }
 
   // The dialogs are siblings of the <li>, not children: React events bubble
@@ -52,7 +60,8 @@ export function ItemRow({
       <li
         {...sort?.rowProps}
         className={cn(
-          "group/row flex items-start gap-3.5 rounded-2xl border border-border bg-card p-4 shadow-sm",
+          "rise group/row flex items-start gap-3.5 rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-lg",
+          done && "is-done",
           sort?.desktop && "cursor-grab",
           sort?.isDragging && "opacity-40",
         )}
@@ -61,13 +70,13 @@ export function ItemRow({
           type="button"
           aria-label={`Complete ${item.title}`}
           onClick={onCheck}
-          className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-cta hover:bg-cta-soft hover:text-cta active:scale-95"
+          className="check mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-cta hover:bg-cta-soft hover:text-cta active:scale-95"
         >
           <Check size={16} strokeWidth={3} />
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="break-words text-[1.05rem] font-medium leading-snug">
+          <p className="title break-words text-[1.05rem] font-medium leading-snug">
             {item.title}
           </p>
           {item.notes && (
@@ -80,7 +89,8 @@ export function ItemRow({
               <NavLink
                 key={t.id}
                 href={`/browse?t=${t.id}`}
-                className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent hover:opacity-80"
+                style={listStyle(t.id)}
+                className="lc-chip rounded-full px-2.5 py-1 text-xs font-semibold hover:opacity-80"
               >
                 {t.name}
               </NavLink>
