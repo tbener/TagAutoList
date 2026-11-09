@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TagAutoList - blue, orange, cream options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;font-family:Figtree,system-ui,sans-serif;background:#ddd;color:#222}
+  header{padding:20px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:20px;margin:0}
+  .tog button{padding:8px 14px;border:1px solid #888;background:#fff;border-radius:99px;cursor:pointer;font:inherit}
+  .tog button.on{background:#222;color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;padding:0 24px 40px}
+  .opt{border-radius:20px;overflow:hidden;background:var(--bg);color:var(--fg);padding:20px;border:1px solid var(--border)}
+  .opt h2{margin:0 0 2px;font-size:18px}
+  .opt p.d{margin:0 0 14px;color:var(--muted);font-size:13px}
+  .sw{display:flex;gap:6px;margin-bottom:16px}
+  .sw span{flex:1;height:44px;border-radius:10px;border:1px solid var(--border);font-size:10px;display:flex;align-items:end;padding:4px;box-sizing:border-box}
+  .phone{background:var(--bg);border:1px solid var(--border);border-radius:22px;padding:14px;max-width:300px;margin:auto}
+  .title{font-size:22px;font-weight:700;color:var(--accent);margin:2px 0 10px}
+  .row{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+  .chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--muted);flex:none;margin-top:1px}
+  .row b{font-weight:500;display:block}
+  .chip{display:inline-block;font-size:11px;font-weight:600;border-radius:99px;padding:2px 9px;margin:4px 4px 0 0;background:var(--accent-soft);color:var(--accent)}
+  .chip.o{background:var(--cta-soft);color:var(--cta)}
+  .nav{display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap}
+  .pill{font-size:13px;font-weight:600;border-radius:99px;padding:6px 12px;background:var(--accent);color:var(--accent-fg)}
+  .pill.s{background:var(--accent-soft);color:var(--accent)}
+  .add{display:flex;gap:8px;margin-top:10px}
+  .add div{flex:1;border:1px solid var(--border);background:var(--card);border-radius:12px;padding:10px;color:var(--muted);font-size:14px}
+  .add i{width:40px;border-radius:12px;background:var(--cta);color:var(--cta-fg);display:grid;place-items:center;font-style:normal;font-size:22px}
+  .btn{display:inline-block;margin-top:12px;background:var(--cta);color:var(--cta-fg);padding:9px 16px;border-radius:12px;font-weight:600;font-size:14px}
+  /* A: shipped */
+  .A{--bg:#faf4e8;--card:#fffdf8;--fg:#1c2a44;--muted:#667089;--border:#e9dfca;--accent:#2b50aa;--accent-soft:#e4ebf8;--accent-fg:#fff;--cta:#c2521a;--cta-soft:#fbe7d9;--cta-fg:#fff}
+  .dark .A{--bg:#111a2c;--card:#1a2540;--fg:#f4ecdc;--muted:#9ba6bf;--border:#2b3a5c;--accent:#8aaaf2;--accent-soft:#23335a;--accent-fg:#111a2c;--cta:#ff9a57;--cta-soft:#43301f;--cta-fg:#231305}
+  /* B: brighter, airy */
+  .B{--bg:#f3f7fc;--card:#ffffff;--fg:#10233d;--muted:#5f7390;--border:#dde6f1;--accent:#1d6fe0;--accent-soft:#e1edfd;--accent-fg:#fff;--cta:#d9660b;--cta-soft:#fdeedd;--cta-fg:#fff}
+  .dark .B{--bg:#0d1726;--card:#16243a;--fg:#eaf1fb;--muted:#8fa4c2;--border:#243653;--accent:#6aa8ff;--accent-soft:#1c3358;--accent-fg:#0d1726;--cta:#ffa24a;--cta-soft:#3d2a15;--cta-fg:#26130a}
+  /* C: warm cream, navy, marigold */
+  .C{--bg:#f6ecd6;--card:#fdf8ea;--fg:#1d2f55;--muted:#6f6a5a;--border:#e6d8b8;--accent:#1f3a6e;--accent-soft:#e3e6ee;--accent-fg:#fff;--cta:#e29a1c;--cta-soft:#fbecc9;--cta-fg:#2b1c00}
+  .dark .C{--bg:#14203a;--card:#1d2c4d;--fg:#f6ecd6;--muted:#a9b0c4;--border:#2f4170;--accent:#9db7ee;--accent-soft:#2a3b66;--accent-fg:#14203a;--cta:#f2b24a;--cta-soft:#4a3818;--cta-fg:#2b1c00}
+</style>
+</head>
+<body>
+<header>
+  <h1>Blue, orange &amp; cream - options</h1>
+  <div class="tog"><button id="l" class="on">Light</button> <button id="d">Dark</button></div>
+</header>
+<div class="grid">
+  <!-- generated below -->
+</div>
+<script>
+const opts=[
+ ["A","A - Cream &amp; Cobalt (what the app uses now)","Warm cream paper, ink-navy text, cobalt blue structure, burnt-orange actions."],
+ ["B","B - Sky &amp; Tangerine","Cooler, airier: pale blue-white, a brighter blue, vivid orange. Cream only as a tint."],
+ ["C","C - Navy &amp; Marigold","Cream-forward and calm: deep navy for structure, golden marigold for actions."]
+];
+const sw=["bg","card","fg","accent","cta"];
+document.querySelector(".grid").innerHTML=opts.map(([k,t,d])=>`
+<section class="opt ${k}"><h2>${t}</h2><p class="d">${d}</p>
+<div class="sw">${sw.map(s=>`<span style="background:var(--${s});color:${s==='fg'||s==='accent'||s==='cta'?'var(--'+(s==='fg'?'bg':s==='accent'?'accent-fg':'cta-fg')+')':'var(--muted)'}">${s}</span>`).join("")}</div>
+<div class="phone">
+ <div class="title">Shopping</div>
+ <div class="nav"><span class="pill">Shopping &times;</span><span class="pill s">+ Kid One</span><span class="pill s">+ Home</span></div>
+ <div class="row"><div class="chk"></div><div><b>Chair</b><span class="chip">Kid One</span><span class="chip">Home</span></div></div>
+ <div class="row"><div class="chk"></div><div><b>Birthday gift</b><span class="chip o">Urgent</span></div></div>
+ <div class="row"><div class="chk"></div><div><b>Milk</b></div></div>
+ <div class="add"><div>Add a task...</div><i>+</i></div>
+ <span class="btn">Save</span>
+</div></section>`).join("");
+const b=document.body;
+l.onclick=()=>{b.classList.remove("dark");l.classList.add("on");d.classList.remove("on")};
+d.onclick=()=>{b.classList.add("dark");d.classList.add("on");l.classList.remove("on")};
+</script>
+</body>
+</html>
