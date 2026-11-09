@@ -2,57 +2,38 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
-## [0.11.2] — 2026-11-10
-
-### Fixed
-- Removed the database "SECURITY WARNING" about sslmode that showed up as an error in the dev console. The connection behaves exactly as before.
-
-## [0.11.1] — 2026-11-09
+## [0.1.8] — 2026-11-10
 
 ### Fixed
 - The list suggestions when editing a task's lists are no longer cut off at the bottom of the dialog. They float above it, flip upward when there is no room below, scroll when there are many, and show every matching list.
 - You can pick a suggestion with the arrow keys and Enter, and Escape closes only the suggestions, not the dialog.
 - Hebrew list names now display and align correctly in the suggestions and chips.
+- Removed the database "SECURITY WARNING" about sslmode that showed up as an error in the dev console. The connection behaves exactly as before.
 
-## [0.11.0] — 2026-11-09
-
-### Changed
-- A completely new look, "Aurora Glass": frosted-glass cards, sidebar and top bar over a soft glowing background, in a pearly lavender light mode and a deep indigo night mode, with indigo-to-orchid action buttons and the Sora font for titles.
-- Removed the per-list colours and dots from 0.10.0. The check-off animation and spring sheets stay.
-
-## [0.10.0] — 2026-11-09
-
-### Changed
-- New "Sky & Tangerine" look: cool blue-white with bright blue and orange.
-- Every list now has its own colour, shown on its dot, its tags on tasks, and a soft wash behind its title.
-- Checking a task off now plays a short animation. Tasks, sheets and messages ease in with a gentle spring.
-- The sidebar and top bar are frosted glass, with soft glows in the background and layered shadows on cards.
-- A friendlier empty state for lists with nothing to do.
-
-## [0.9.0] — 2026-11-09
+## [0.1.7] — 2026-11-09
 
 ### Added
 - A Settings page (link at the bottom of the sidebar) with a theme choice: Light, Dark or Auto (follows your device). It is remembered on this device.
-
-## [0.8.0] — 2026-11-09
+- Checking a task off now plays a short animation, and tasks, sheets and messages ease in with a gentle spring.
+- A friendlier empty state for lists with nothing to do.
 
 ### Changed
-- A new look: warm cream background, deep blue for structure and orange for actions, with a matching dark mode and the Figtree font.
-- The install colour (browser bar and splash screen) now matches.
+- A completely new look, "Aurora Glass": frosted-glass cards, sidebar and top bar over a soft glowing background, in a pearly lavender light mode and a deep indigo night mode, with indigo-to-orchid action buttons and the Sora font for titles.
+- The install colours (browser bar and splash screen) match the new look.
 
-## [0.7.0] — 2026-11-06
+## [0.1.6] — 2026-11-06
 
 ### Added
 - An About page explaining how TagAutoList works, with a way to send feedback.
 - This changelog, and the app version shown at the bottom of the sidebar.
 
-## [0.6.0] — 2026-11-06
+## [0.1.5] — 2026-11-06
 
 ### Changed
 - The sign-in button is now the official "Continue with Google" button, in a light or dark style to match your device.
 - Signing in shows a small spinner while it works.
 
-## [0.5.0] — 2026-11-06
+## [0.1.4] — 2026-11-06
 
 ### Added
 - Duplicate a list from the "⋯" menu next to its title. You get a "<name> - copy" at the top of your lists with copies of everything still to do, which also show up in the other lists the originals belong to.
@@ -61,7 +42,7 @@ All notable changes to TagAutoList, newest first. The format follows [Keep a Cha
 ### Changed
 - Renaming a list no longer opens a pop-up.
 
-## [0.4.0] — 2026-11-06
+## [0.1.3] — 2026-11-06
 
 ### Added
 - Drag tasks to put them in your own order within a list. Each list keeps its own order, so moving a task in one list doesn't move it in another.
@@ -71,7 +52,7 @@ All notable changes to TagAutoList, newest first. The format follows [Keep a Cha
 ### Changed
 - When you drill down into several lists, tasks follow the order of the list you started from.
 
-## [0.3.0] — 2026-11-06
+## [0.1.2] — 2026-11-06
 
 ### Added
 - Drag lists to reorder them in the sidebar, the drawer and the Lists screen on your phone. New lists appear at the top.
@@ -79,7 +60,7 @@ All notable changes to TagAutoList, newest first. The format follows [Keep a Cha
 ### Changed
 - Lists are no longer sorted alphabetically; they stay in the order you give them.
 
-## [0.2.0] — 2026-11-06
+## [0.1.1] — 2026-11-06
 
 ### Added
 - A delete (trash) button on every task. For a task in several lists you choose which lists to remove it from, or delete it everywhere.
