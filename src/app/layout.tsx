@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree } from "next/font/google";
+import { Figtree, Sora } from "next/font/google";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { RegisterSW } from "@/components/register-sw";
 
+const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" });
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", display: "swap" });
 
 export const metadata: Metadata = {
@@ -16,8 +17,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f7fc" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d1726" },
+    { media: "(prefers-color-scheme: light)", color: "#eceffa" },
+    { media: "(prefers-color-scheme: dark)", color: "#090a1f" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={figtree.variable} suppressHydrationWarning>
+    <html lang="en" className={`${figtree.variable} ${sora.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>

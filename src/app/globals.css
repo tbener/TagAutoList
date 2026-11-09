@@ -1,66 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  /* Theme B "Sky & Tangerine": cool blue-white paper, bright blue structure, orange actions. */
-  --bg: #f3f7fc;
-  --card: #ffffff;
-  --fg: #10233d;
-  --muted: #5f7390;
-  --border: #dde6f1;
-  --accent: #1d6fe0;
-  --accent-soft: #e1edfd;
+  /* "Aurora Glass": pearly lavender light mode, deep indigo night mode, frosted surfaces. */
+  --bg: #eceffa;
+  --card: rgb(255 255 255 / 0.58);
+  --card-strong: rgb(255 255 255 / 0.9);
+  --fg: #15163a;
+  --muted: #5b6188;
+  --border: rgb(90 100 200 / 0.16);
+  --accent: #5558e8;
+  --accent-soft: rgb(85 88 232 / 0.11);
   --accent-fg: #ffffff;
-  --cta: #d9660b;
-  --cta-soft: #fdeedd;
+  --cta: #5a63f0;
+  --cta-2: #a25cf0;
+  --cta-soft: rgb(106 92 245 / 0.14);
   --cta-fg: #ffffff;
-  --danger: #c93434;
-  --sh-sm: 0 1px 2px rgb(16 35 61 / 0.05), 0 6px 16px -8px rgb(29 111 224 / 0.22);
-  --sh-lg: 0 2px 6px rgb(16 35 61 / 0.06), 0 22px 44px -14px rgb(16 35 61 / 0.30);
-  --glass: rgb(255 255 255 / 0.68);
-  --glow-a: rgb(29 111 224 / 0.13);
-  --glow-b: rgb(242 140 40 / 0.10);
+  --danger: #d23a4a;
+  --sh-sm: 0 1px 1px rgb(30 30 90 / 0.04), 0 12px 30px -14px rgb(70 70 200 / 0.30);
+  --sh-lg: 0 2px 6px rgb(30 30 90 / 0.06), 0 26px 56px -16px rgb(60 60 190 / 0.38);
+  --glass: rgb(255 255 255 / 0.5);
+  --glow-a: rgb(139 120 255 / 0.40);
+  --glow-b: rgb(86 168 255 / 0.34);
+  --glow-c: rgb(255 168 150 / 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d1726;
-    --card: #16243a;
-    --fg: #eaf1fb;
-    --muted: #8fa4c2;
-    --border: #243653;
-    --accent: #6aa8ff;
-    --accent-soft: #1c3358;
-    --accent-fg: #0d1726;
-    --cta: #ffa24a;
-    --cta-soft: #3d2a15;
-    --cta-fg: #26130a;
-    --danger: #f87171;
-    --sh-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 20px -10px rgb(0 0 0 / 0.55);
-    --sh-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 26px 50px -14px rgb(0 0 0 / 0.7);
-    --glass: rgb(22 36 58 / 0.62);
-    --glow-a: rgb(106 168 255 / 0.14);
-    --glow-b: rgb(255 162 74 / 0.08);
+    --bg: #090a1f;
+    --card: rgb(255 255 255 / 0.055);
+    --card-strong: rgb(24 26 60 / 0.92);
+    --fg: #eceefe;
+    --muted: #9a9fc9;
+    --border: rgb(255 255 255 / 0.10);
+    --accent: #a3b2ff;
+    --accent-soft: rgb(163 178 255 / 0.14);
+    --accent-fg: #0a0b22;
+    --cta: #7f8dff;
+    --cta-2: #b78bff;
+    --cta-soft: rgb(160 140 255 / 0.2);
+    --cta-fg: #0a0b22;
+    --danger: #ff7b86;
+    --sh-sm: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 14px 30px -14px rgb(0 0 0 / 0.7);
+    --sh-lg: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 30px 60px -16px rgb(0 0 0 / 0.8);
+    --glass: rgb(18 20 52 / 0.5);
+    --glow-a: rgb(124 92 255 / 0.38);
+    --glow-b: rgb(52 120 255 / 0.30);
+    --glow-c: rgb(255 100 170 / 0.16);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #0d1726;
-  --card: #16243a;
-  --fg: #eaf1fb;
-  --muted: #8fa4c2;
-  --border: #243653;
-  --accent: #6aa8ff;
-  --accent-soft: #1c3358;
-  --accent-fg: #0d1726;
-  --cta: #ffa24a;
-  --cta-soft: #3d2a15;
-  --cta-fg: #26130a;
-  --danger: #f87171;
-  --sh-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 20px -10px rgb(0 0 0 / 0.55);
-  --sh-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 26px 50px -14px rgb(0 0 0 / 0.7);
-  --glass: rgb(22 36 58 / 0.62);
-  --glow-a: rgb(106 168 255 / 0.14);
-  --glow-b: rgb(255 162 74 / 0.08);
+  --bg: #090a1f;
+  --card: rgb(255 255 255 / 0.055);
+  --card-strong: rgb(24 26 60 / 0.92);
+  --fg: #eceefe;
+  --muted: #9a9fc9;
+  --border: rgb(255 255 255 / 0.10);
+  --accent: #a3b2ff;
+  --accent-soft: rgb(163 178 255 / 0.14);
+  --accent-fg: #0a0b22;
+  --cta: #7f8dff;
+  --cta-2: #b78bff;
+  --cta-soft: rgb(160 140 255 / 0.2);
+  --cta-fg: #0a0b22;
+  --danger: #ff7b86;
+  --sh-sm: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 14px 30px -14px rgb(0 0 0 / 0.7);
+  --sh-lg: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 30px 60px -16px rgb(0 0 0 / 0.8);
+  --glass: rgb(18 20 52 / 0.5);
+  --glow-a: rgb(124 92 255 / 0.38);
+  --glow-b: rgb(52 120 255 / 0.30);
+  --glow-c: rgb(255 100 170 / 0.16);
 }
 
 @theme inline {
@@ -75,10 +84,12 @@
   --color-cta: var(--cta);
   --color-cta-soft: var(--cta-soft);
   --color-cta-fg: var(--cta-fg);
+  --color-card-strong: var(--card-strong);
   --color-danger: var(--danger);
   --shadow-sm: var(--sh-sm);
   --shadow-lg: var(--sh-lg);
   --shadow-xl: var(--sh-lg);
+  --font-display: var(--font-sora), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -104,8 +115,9 @@ html[data-theme="dark"] {
 
 body {
   background:
-    radial-gradient(60rem 28rem at 8% -8%, var(--glow-a), transparent 70%),
-    radial-gradient(48rem 26rem at 100% 108%, var(--glow-b), transparent 70%),
+    radial-gradient(52rem 34rem at 6% -6%, var(--glow-a), transparent 68%),
+    radial-gradient(46rem 32rem at 100% 12%, var(--glow-b), transparent 68%),
+    radial-gradient(54rem 30rem at 40% 112%, var(--glow-c), transparent 70%),
     var(--bg);
   background-attachment: fixed;
   color: var(--fg);
@@ -120,30 +132,33 @@ a {
 
 /* ---- Type ---- */
 h1, h2 {
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
 }
 
-/* ---- Per-list colour (set --lc on an element via listStyle()) ---- */
-.lc-chip {
-  background: color-mix(in oklab, var(--lc) 15%, var(--card));
-  color: color-mix(in oklab, var(--lc) 62%, var(--fg));
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--lc) 22%, transparent);
+/* Frosted surfaces: anything using the card colour blurs what is behind it. */
+.bg-card,
+.bg-card-strong {
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
 }
-.lc-dot {
-  background: var(--lc);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--lc) 22%, transparent);
+.bg-card {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
 }
-.lc-wash {
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--lc) 16%, transparent),
-    transparent 85%
-  );
+:root[data-theme="dark"] .bg-card {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+/* Primary actions: a soft indigo to orchid gradient with a glow. */
+.bg-cta {
+  background-image: linear-gradient(135deg, var(--cta), var(--cta-2));
+  box-shadow: 0 8px 20px -8px var(--cta);
 }
 
 /* ---- Glass chrome ---- */
 .glass {
   background: var(--glass);
+  border-color: var(--border);
   -webkit-backdrop-filter: blur(18px) saturate(170%);
   backdrop-filter: blur(18px) saturate(170%);
 }

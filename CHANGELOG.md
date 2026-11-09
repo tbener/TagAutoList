@@ -2,6 +2,12 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.11.0] — 2026-11-09
+
+### Changed
+- A completely new look, "Aurora Glass": frosted-glass cards, sidebar and top bar over a soft glowing background, in a pearly lavender light mode and a deep indigo night mode, with indigo-to-orchid action buttons and the Sora font for titles.
+- Removed the per-list colours and dots from 0.10.0. The check-off animation and spring sheets stay.
+
 ## [0.10.0] — 2026-11-09
 
 ### Changed

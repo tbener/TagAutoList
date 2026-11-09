@@ -1,6 +1,5 @@
 "use client";
 
-import { listStyle } from "@/lib/list-color";
 import { useMemo } from "react";
 import { browseHref, tagsWithCounts } from "@/lib/tree";
 import { SortableLists, SortableRow } from "../dnd";
@@ -38,15 +37,13 @@ export function HomeView() {
                     <div className="flex items-center">
                       <NavLink
                         href={browseHref([tag.id])}
-                        className="flex min-w-0 flex-1 items-center gap-3 py-4 pl-4 active:bg-accent-soft"
+                        className="flex min-w-0 flex-1 items-center gap-3 py-4 pl-5 active:bg-accent-soft"
                       >
-                        <span style={listStyle(tag.id)} className="lc-dot size-3 shrink-0 rounded-full" />
                         <span className="min-w-0 flex-1 truncate text-[1.05rem] font-medium">
                           {tag.name}
                         </span>
                         {active > 0 && (
-                          <span style={listStyle(tag.id)}
-                            className="lc-chip rounded-full px-2.5 py-0.5 text-sm font-semibold">
+                          <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-sm font-medium text-accent">
                             {active}
                           </span>
                         )}

@@ -1,6 +1,5 @@
 "use client";
 
-import { listStyle } from "@/lib/list-color";
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useItemSortable } from "./dnd";
@@ -89,8 +88,7 @@ export function ItemRow({
               <NavLink
                 key={t.id}
                 href={`/browse?t=${t.id}`}
-                style={listStyle(t.id)}
-                className="lc-chip rounded-full px-2.5 py-1 text-xs font-semibold hover:opacity-80"
+                className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent hover:opacity-80"
               >
                 {t.name}
               </NavLink>

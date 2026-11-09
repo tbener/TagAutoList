@@ -1,6 +1,5 @@
 "use client";
 
-import { listStyle } from "@/lib/list-color";
 import { Copy, History, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, navigate } from "./nav-link";
@@ -102,11 +101,7 @@ export function ListHeader({
   }
 
   return (
-    <div
-      style={listStyle(list.id)}
-      className="lc-wash -mx-4 -mt-6 flex items-center justify-between gap-3 px-4 pb-4 pt-6 md:-mx-8 md:-mt-8 md:px-8 md:pt-8"
-    >
-      <span className="lc-dot size-3.5 shrink-0 rounded-full" />
+    <div className="flex items-center justify-between gap-3">
       {editing ? (
         <input
           ref={input}

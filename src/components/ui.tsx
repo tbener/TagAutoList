@@ -79,7 +79,7 @@ export function Modal({
         <Dialog.Overlay className="overlay-in fixed inset-0 z-40 bg-[#0a1424]/45 backdrop-blur-[2px]" />
         <Dialog.Content
           className={cn(
-            "sheet-in fixed z-50 max-h-[90dvh] overflow-y-auto border border-border bg-card p-5 shadow-xl outline-none",
+            "sheet-in fixed z-50 max-h-[90dvh] overflow-y-auto border border-border bg-card-strong p-5 shadow-xl outline-none backdrop-blur-xl",
             "inset-x-0 bottom-0 rounded-t-2xl pb-[max(1.25rem,env(safe-area-inset-bottom))]",
             "sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
           )}

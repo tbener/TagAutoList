@@ -1,6 +1,5 @@
 "use client";
 
-import { listStyle } from "@/lib/list-color";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronRight, Menu } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -80,7 +79,7 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
           <Dialog.Overlay className="overlay-in fixed inset-0 z-40 bg-[#0a1424]/45 backdrop-blur-[2px] md:hidden" />
           <Dialog.Content
             aria-describedby={undefined}
-            className="fixed inset-y-0 left-0 z-50 w-[88vw] max-w-sm bg-card shadow-xl outline-none md:hidden"
+            className="glass fixed inset-y-0 left-0 z-50 w-[88vw] max-w-sm shadow-xl outline-none md:hidden"
           >
             <Dialog.Title className="sr-only">Lists</Dialog.Title>
             <Sidebar area="drawer" footer={footer} path={path} />
@@ -234,7 +233,6 @@ function TreeItem({
             node.selected && "font-semibold",
           )}
         >
-          <span style={listStyle(node.tag.id)} className="lc-dot size-2.5 shrink-0 rounded-full" />
           <span className="min-w-0 flex-1 truncate">{node.tag.name}</span>
           {node.count > 0 && <span className="text-xs text-muted">{node.count}</span>}
         </NavLink>
