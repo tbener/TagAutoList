@@ -17,7 +17,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #111a2c;
     --card: #1a2540;
     --fg: #f4ecdc;
@@ -31,6 +31,21 @@
     --cta-fg: #231305;
     --danger: #f87171;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #111a2c;
+  --card: #1a2540;
+  --fg: #f4ecdc;
+  --muted: #9ba6bf;
+  --border: #2b3a5c;
+  --accent: #8aaaf2;
+  --accent-soft: #23335a;
+  --accent-fg: #111a2c;
+  --cta: #ff9a57;
+  --cta-soft: #43301f;
+  --cta-fg: #231305;
+  --danger: #f87171;
 }
 
 @theme inline {
@@ -53,6 +68,14 @@ html {
   color-scheme: light dark;
   /* Everything is rem-based, so this scales the whole UI up on phones. */
   font-size: 17.5px;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 @media (min-width: 768px) {

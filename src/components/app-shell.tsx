@@ -167,9 +167,14 @@ function Sidebar({
         <NewListButton />
         {footer}
         <div className="flex items-center justify-between px-3 pt-1 text-xs text-muted">
-          <NavLink href="/about" className="rounded-md py-1 hover:text-fg">
-            About
-          </NavLink>
+          <span className="flex gap-4">
+            <NavLink href="/settings" className="rounded-md py-1 hover:text-fg">
+              Settings
+            </NavLink>
+            <NavLink href="/about" className="rounded-md py-1 hover:text-fg">
+              About
+            </NavLink>
+          </span>
           <NavLink href="/changelog" title="What's new" className="rounded-md py-1 hover:text-fg">
             v{APP_VERSION}
           </NavLink>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
 import "./globals.css";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { RegisterSW } from "@/components/register-sw";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", display: "swap" });
@@ -24,7 +25,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={figtree.variable}>
+    <html lang="en" className={figtree.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-dvh antialiased">
         {children}
         <RegisterSW />

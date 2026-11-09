@@ -9,6 +9,7 @@ import { AboutView } from "./views/about-view";
 import { ChangelogView } from "./views/changelog-view";
 import { BrowseView } from "./views/browse-view";
 import { HistoryView } from "./views/history-view";
+import { SettingsView } from "./views/settings-view";
 import { HomeView } from "./views/home-view";
 import { DataProvider } from "./store";
 
@@ -54,6 +55,7 @@ function Views({ releases }: { releases: Release[] }) {
         rename={search.get("rename") === "1"}
       />
     );
+  if (pathname === "/settings") return <SettingsView />;
   if (pathname === "/about") return <AboutView />;
   if (pathname === "/changelog") return <ChangelogView releases={releases} />;
   if (pathname === "/history") return <HistoryView tagId={search.get("tag")} />;

@@ -2,6 +2,11 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.9.0] — 2026-11-09
+
+### Added
+- A Settings page (link at the bottom of the sidebar) with a theme choice: Light, Dark or Auto (follows your device). It is remembered on this device.
+
 ## [0.8.0] — 2026-11-09
 
 ### Changed
