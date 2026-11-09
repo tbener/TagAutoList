@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import { RegisterSW } from "@/components/register-sw";
+
+const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "TagAutoList", template: "%s · TagAutoList" },
@@ -11,14 +14,17 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf4e8" },
+    { media: "(prefers-color-scheme: dark)", color: "#111a2c" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={figtree.variable}>
       <body className="min-h-dvh antialiased">
         {children}
         <RegisterSW />

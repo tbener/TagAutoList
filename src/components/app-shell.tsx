@@ -205,7 +205,7 @@ function TreeItem({
           "flex items-center rounded-xl hover:bg-accent-soft",
           node.selected && "bg-accent-soft text-accent",
           target.target && "ring-1 ring-accent/30",
-          target.over && "bg-accent text-accent-fg ring-2 ring-accent",
+          target.over && "bg-cta-soft text-cta ring-2 ring-cta",
         )}
       >
         <button

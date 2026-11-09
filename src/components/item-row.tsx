@@ -61,7 +61,7 @@ export function ItemRow({
           type="button"
           aria-label={`Complete ${item.title}`}
           onClick={onCheck}
-          className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent active:scale-95"
+          className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-cta hover:bg-cta-soft hover:text-cta active:scale-95"
         >
           <Check size={16} strokeWidth={3} />
         </button>

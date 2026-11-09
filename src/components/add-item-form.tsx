@@ -60,7 +60,7 @@ export function AddItemForm({
           type="submit"
           aria-label="Add task"
           disabled={!canAdd}
-          className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-fg transition-opacity disabled:opacity-30 md:hidden"
+          className="grid size-10 shrink-0 place-items-center rounded-xl bg-cta text-cta-fg shadow-sm transition-opacity disabled:opacity-30 md:hidden"
         >
           <Plus size={20} />
         </button>

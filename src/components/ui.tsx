@@ -23,7 +23,7 @@ export function Button({
       className={cn(
         "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-colors active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
         size === "md" ? "h-11 px-5 text-sm md:h-10 md:px-4" : "h-9 px-3.5 text-xs md:h-8 md:px-3",
-        variant === "primary" && "bg-accent text-accent-fg hover:opacity-90",
+        variant === "primary" && "bg-cta text-cta-fg shadow-sm hover:opacity-90",
         variant === "outline" && "border border-border hover:bg-accent-soft",
         variant === "ghost" && "hover:bg-accent-soft",
         variant === "danger" && "bg-danger text-white hover:opacity-90",

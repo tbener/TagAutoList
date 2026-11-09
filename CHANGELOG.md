@@ -2,6 +2,12 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.8.0] — 2026-11-09
+
+### Changed
+- A new look: warm cream background, deep blue for structure and orange for actions, with a matching dark mode and the Figtree font.
+- The install colour (browser bar and splash screen) now matches.
+
 ## [0.7.0] — 2026-11-06
 
 ### Added

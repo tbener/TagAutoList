@@ -1,27 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f6f6f9;
-  --card: #ffffff;
-  --fg: #16161d;
-  --muted: #6b6b7a;
-  --border: #e4e4ec;
-  --accent: #4f46e5;
-  --accent-soft: #eceafd;
+  /* Cream paper, ink-navy text, cobalt for structure, tangerine for actions. */
+  --bg: #faf4e8;
+  --card: #fffdf8;
+  --fg: #1c2a44;
+  --muted: #667089;
+  --border: #e9dfca;
+  --accent: #2b50aa;
+  --accent-soft: #e4ebf8;
   --accent-fg: #ffffff;
-  --danger: #dc2626;
+  --cta: #c2521a;
+  --cta-soft: #fbe7d9;
+  --cta-fg: #ffffff;
+  --danger: #c93434;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #101015;
-    --card: #1a1a22;
-    --fg: #ececf3;
-    --muted: #9494a6;
-    --border: #2b2b38;
-    --accent: #8b85ff;
-    --accent-soft: #26244a;
-    --accent-fg: #101015;
+    --bg: #111a2c;
+    --card: #1a2540;
+    --fg: #f4ecdc;
+    --muted: #9ba6bf;
+    --border: #2b3a5c;
+    --accent: #8aaaf2;
+    --accent-soft: #23335a;
+    --accent-fg: #111a2c;
+    --cta: #ff9a57;
+    --cta-soft: #43301f;
+    --cta-fg: #231305;
     --danger: #f87171;
   }
 }
@@ -35,8 +42,11 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-fg: var(--accent-fg);
+  --color-cta: var(--cta);
+  --color-cta-soft: var(--cta-soft);
+  --color-cta-fg: var(--cta-fg);
   --color-danger: var(--danger);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 html {
