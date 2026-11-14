@@ -66,6 +66,15 @@ export function orderedTagLinks(snap: Snapshot, tagId: string): Link[] {
     );
 }
 
+/**
+ * "Only this list": keep the items whose *active* tags are exactly the tags of
+ * `path` (nothing else). Display-only; sub-branches are still computed from all items.
+ */
+export function onlyOnPath(items: ItemView[], path: string[]): ItemView[] {
+  const want = new Set(path);
+  return items.filter((i) => i.tags.length === want.size && i.tags.every((t) => want.has(t.id)));
+}
+
 export type SubTag = { tag: Tag; count: number };
 
 /**

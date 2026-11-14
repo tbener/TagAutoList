@@ -4,6 +4,7 @@ import {
   browse,
   sidebarModel,
   history,
+  onlyOnPath,
   type Snapshot,
 } from "./tree";
 
@@ -179,5 +180,47 @@ describe("history", () => {
       "Education Lesson",
       "Chair",
     ]);
+  });
+});
+
+
+describe("onlyOnPath (Only this list)", () => {
+  const snap = (): Snapshot => {
+    const b = base();
+    return {
+      ...b,
+      items: [...b.items, item("milk", "Milk", 4)],
+      links: [...b.links, link("milk", "shop")],
+    };
+  };
+
+  it("in Shopping keeps Milk and hides Chair and Table", () => {
+    const { items } = browse(snap(), ["shop"]);
+    expect(items.map((i) => i.title).sort()).toEqual(["Chair", "Milk", "Table"]);
+    expect(onlyOnPath(items, ["shop"]).map((i) => i.title)).toEqual(["Milk"]);
+  });
+
+  it("in Shopping > Kid One keeps only items with exactly those two lists", () => {
+    const s = snap();
+    s.items.push(item("rug", "Rug", 5));
+    s.links.push(link("rug", "shop"), link("rug", "k1"));
+    s.links.push(link("chair", "k2")); // Chair now has three lists
+    const { items } = browse(s, ["shop", "k1"]);
+    expect(items.map((i) => i.title).sort()).toEqual(["Chair", "Rug"]);
+    expect(onlyOnPath(items, ["shop", "k1"]).map((i) => i.title)).toEqual(["Rug"]);
+  });
+
+  it("ignores completed associations (they are history, not other lists)", () => {
+    const s = snap();
+    s.links = s.links.map((l) =>
+      l.itemId === "chair" && l.tagId === "k1" ? { ...l, completedAt: d(9) } : l,
+    );
+    const { items } = browse(s, ["shop"]);
+    expect(onlyOnPath(items, ["shop"]).map((i) => i.title).sort()).toEqual(["Chair", "Milk"]);
+  });
+
+  it("does not change what browse() offers as sub-branches", () => {
+    const { subTags } = browse(snap(), ["shop"]);
+    expect(subTags.map((s) => s.tag.name).sort()).toEqual(["Kid One", "Kid Two"]);
   });
 });
