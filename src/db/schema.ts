@@ -53,6 +53,8 @@ export const items = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     title: text().notNull(),
     notes: text().notNull().default(""),
+    /** My Day: null = not in My Day; a number is its manual order there (lower = higher up). */
+    myDayPosition: integer(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("items_user_idx").on(t.userId)],

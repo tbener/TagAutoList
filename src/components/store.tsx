@@ -42,6 +42,10 @@ type Store = {
   /** A short neutral confirmation message. */
   toast: string | null;
   flash(message: string): void;
+  /** My Day. `addToMyDay` returns false (and does nothing) when the task is already there. */
+  addToMyDay(itemId: string): boolean;
+  removeFromMyDay(itemId: string): void;
+  reorderMyDay(orderedItemIds: string[]): void;
   completeItem(id: string, tagIds: string[]): void;
   restoreCompletion(itemId: string, tagId: string): void;
 };
@@ -264,6 +268,24 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
         if (!tagIds.length) return;
         commit(ops.removeItemFromTags(ref.current, id, tagIds));
         save(() => api.removeItemFromTags(id, tagIds));
+      },
+
+      addToMyDay(itemId) {
+        if (ops.inMyDay(ref.current, itemId) || !ref.current.items.some((i) => i.id === itemId)) return false;
+        commit(ops.addToMyDay(ref.current, itemId));
+        save(() => api.addToMyDay(itemId));
+        return true;
+      },
+
+      removeFromMyDay(itemId) {
+        if (!ops.inMyDay(ref.current, itemId)) return;
+        commit(ops.removeFromMyDay(ref.current, itemId));
+        save(() => api.removeFromMyDay(itemId));
+      },
+
+      reorderMyDay(orderedItemIds) {
+        commit(ops.reorderMyDay(ref.current, orderedItemIds));
+        save(() => api.reorderMyDay(orderedItemIds));
       },
 
       completeItem(id, tagIds) {

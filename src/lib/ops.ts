@@ -47,7 +47,7 @@ export function addItem(
   const s = withTags(snap, p.refs);
   return {
     ...s,
-    items: [...s.items, { id: p.id, title: p.title, notes: "", createdAt: p.now }],
+    items: [...s.items, { id: p.id, title: p.title, notes: "", createdAt: p.now, myDayPosition: null }],
     links: [
       ...s.links,
       ...p.refs.map((r) => ({
@@ -112,13 +112,64 @@ export function removeItemFromTags(snap: Snapshot, itemId: string, tagIds: strin
   return stillActive ? { ...snap, links } : deleteItem({ ...snap, links }, itemId);
 }
 
+/**
+ * Complete the item in the given lists. If that leaves it in no list at all
+ * it is fully done and leaves My Day; if it is still active elsewhere it stays.
+ */
 export function completeItem(snap: Snapshot, itemId: string, tagIds: string[], now: Date): Snapshot {
   const ids = new Set(tagIds);
+  const links = snap.links.map((l) =>
+    l.itemId === itemId && ids.has(l.tagId) && !l.completedAt ? { ...l, completedAt: now } : l,
+  );
+  const done = !links.some((l) => l.itemId === itemId && !l.completedAt);
   return {
     ...snap,
-    links: snap.links.map((l) =>
-      l.itemId === itemId && ids.has(l.tagId) && !l.completedAt ? { ...l, completedAt: now } : l,
-    ),
+    links,
+    items: done
+      ? snap.items.map((i) => (i.id === itemId && i.myDayPosition !== null ? { ...i, myDayPosition: null } : i))
+      : snap.items,
+  };
+}
+
+export const inMyDay = (snap: Snapshot, itemId: string): boolean =>
+  snap.items.some((i) => i.id === itemId && i.myDayPosition !== null);
+
+/** Where a new My Day task goes: above every existing one (mirrors `topLinkPosition`). */
+export function topMyDayPosition(items: Snapshot["items"]): number {
+  let min: number | null = null;
+  for (const i of items) if (i.myDayPosition !== null && (min === null || i.myDayPosition < min)) min = i.myDayPosition;
+  return min === null ? 0 : min - 1;
+}
+
+/** Bring a task to the top of My Day. Unknown or already there: nothing changes (same snapshot). */
+export function addToMyDay(snap: Snapshot, itemId: string): Snapshot {
+  if (!snap.items.some((i) => i.id === itemId) || inMyDay(snap, itemId)) return snap;
+  const top = topMyDayPosition(snap.items);
+  return { ...snap, items: snap.items.map((i) => (i.id === itemId ? { ...i, myDayPosition: top } : i)) };
+}
+
+/** Take a task out of My Day. It stays in its lists and is never completed. */
+export function removeFromMyDay(snap: Snapshot, itemId: string): Snapshot {
+  if (!inMyDay(snap, itemId)) return snap;
+  return { ...snap, items: snap.items.map((i) => (i.id === itemId ? { ...i, myDayPosition: null } : i)) };
+}
+
+/**
+ * Apply a new My Day order. `orderedItemIds` is top to bottom; tasks in My Day
+ * that aren't listed keep their relative order below. Tasks not in My Day are ignored.
+ */
+export function reorderMyDay(snap: Snapshot, orderedItemIds: string[]): Snapshot {
+  const current = snap.items
+    .filter((i) => i.myDayPosition !== null)
+    .sort((a, b) => a.myDayPosition! - b.myDayPosition!)
+    .map((i) => i.id);
+  const known = new Set(current);
+  const first = [...new Set(orderedItemIds)].filter((id) => known.has(id));
+  const listed = new Set(first);
+  const index = new Map([...first, ...current.filter((id) => !listed.has(id))].map((id, i) => [id, i]));
+  return {
+    ...snap,
+    items: snap.items.map((i) => (index.has(i.id) ? { ...i, myDayPosition: index.get(i.id)! } : i)),
   };
 }
 
@@ -233,7 +284,13 @@ export function duplicateList(
     ...snap.items,
     ...order.map((id) => {
       const orig = itemById.get(id)!;
-      return { id: copyOf.get(id)!, title: orig.title, notes: orig.notes, createdAt: p.now };
+      return {
+        id: copyOf.get(id)!,
+        title: orig.title,
+        notes: orig.notes,
+        createdAt: p.now,
+        myDayPosition: null, // copies never start in My Day
+      };
     }),
   ];
 

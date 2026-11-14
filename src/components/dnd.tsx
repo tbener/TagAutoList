@@ -49,7 +49,12 @@ const collision: CollisionDetection = (args) => {
   const only = (type: string) =>
     args.droppableContainers.filter((c) => c.data.current?.type === type);
   if (args.active.data.current?.type === "item") {
-    const hit = pointerWithin({ ...args, droppableContainers: only("tag-drop") });
+    const hit = pointerWithin({
+      ...args,
+      droppableContainers: args.droppableContainers.filter((c) =>
+        ["tag-drop", "myday-drop"].includes(c.data.current?.type),
+      ),
+    });
     return hit.length ? hit : closestCenter({ ...args, droppableContainers: only("item") });
   }
   return closestCenter({ ...args, droppableContainers: only("list") });
@@ -70,7 +75,7 @@ export function useIsDesktop() {
 }
 
 export function AppDnd({ children }: { children: ReactNode }) {
-  const { snap, reorderTags, reorderItems, addTagToItem, flash } = useData();
+  const { snap, reorderTags, reorderItems, reorderMyDay, addTagToItem, addToMyDay, flash } = useData();
   const [dragTitle, setDragTitle] = useState<string | null>(null);
   const sensors = useSensors(
     // Mouse: a few px of movement, so plain clicks still work.
@@ -106,12 +111,19 @@ export function AppDnd({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (a.type === "item" && o.type === "myday-drop") {
+      flash(addToMyDay(a.itemId) ? "Added to My Day" : "Already in My Day");
+      return;
+    }
+
     if (a.type === "item" && o.type === "item" && a.area === o.area && a.itemId !== o.itemId) {
       // dnd-kit hands us the list's current order (ids carry the area prefix).
       const ordered = (a.sortable.items as string[]).map((id) => id.slice(a.area.length + 1));
       const from = ordered.indexOf(a.itemId);
       const to = ordered.indexOf(o.itemId);
-      if (from >= 0 && to >= 0) reorderItems(a.tagId, arrayMove(ordered, from, to));
+      if (from < 0 || to < 0) return;
+      if (a.area === "myday") reorderMyDay(arrayMove(ordered, from, to));
+      else reorderItems(a.tagId, arrayMove(ordered, from, to));
     }
   }
 
@@ -255,16 +267,17 @@ export function SortableRow({
 /**
  * Sortable behaviour for an item row (`<li>`). `enabled: false` (drilled-down
  * views) gives a row with no drag affordance at all. Desktop drags by the row
- * body; phones by the grip.
+ * body; phones by the grip. `area` is "items" (one list, `tagId` set) or
+ * "myday" (the My Day page, no `tagId`).
  */
 export function useItemSortable(opts: {
   itemId: string;
   tagId: string;
   title: string;
   enabled: boolean;
+  area?: "items" | "myday";
 }) {
-  const { itemId, tagId, title, enabled } = opts;
-  const area = "items";
+  const { itemId, tagId, title, enabled, area = "items" } = opts;
   const desktop = useIsDesktop();
   const {
     attributes,
@@ -312,5 +325,17 @@ export function useTagDrop(key: string, tagId: string, enabled: boolean) {
     data: { type: "tag-drop", tagId },
   });
   const target = enabled && desktop && active?.data.current?.type === "item";
+  return { setNodeRef, over: target && isOver, target };
+}
+
+/** The My Day sidebar entry as a drop target for item drags (desktop only). */
+export function useMyDayDrop(key: string) {
+  const desktop = useIsDesktop();
+  const { setNodeRef, isOver, active } = useDroppable({
+    id: `drop:${key}`,
+    disabled: !desktop,
+    data: { type: "myday-drop" },
+  });
+  const target = desktop && active?.data.current?.type === "item";
   return { setNodeRef, over: target && isOver, target };
 }

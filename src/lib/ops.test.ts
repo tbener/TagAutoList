@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as ops from "./ops";
-import { activeItems, browse, sortTags, tagsWithCounts, type Snapshot } from "./tree";
+import { activeItems, browse, myDayItems, sortTags, tagsWithCounts, type Snapshot } from "./tree";
 
 const now = new Date(2026, 5, 1);
 const empty = (): Snapshot => ({ tags: [], items: [], links: [] });
@@ -342,5 +342,69 @@ describe("nested lists", () => {
   it("new lists are always top level", () => {
     const s = ops.addTag(empty(), { id: "x", name: "X" });
     expect(s.tags[0].parentId).toBeNull();
+  });
+});
+
+describe("My Day", () => {
+  const set = () => seeded(); // Chair (Shopping + Kid One), Table (Shopping)
+  const pos = (s: Snapshot, id: string) => s.items.find((i) => i.id === id)!.myDayPosition;
+
+  it("new items start outside My Day", () => {
+    expect(pos(set(), "x")).toBeNull();
+  });
+
+  it("addToMyDay puts a task on top; adding twice changes nothing", () => {
+    let s = ops.addToMyDay(set(), "x");
+    s = ops.addToMyDay(s, "y");
+    expect(pos(s, "y")!).toBeLessThan(pos(s, "x")!);
+    expect(ops.addToMyDay(s, "y")).toBe(s);
+    expect(ops.addToMyDay(s, "nope")).toBe(s);
+  });
+
+  it("removeFromMyDay clears the flag but keeps the task and its lists", () => {
+    const s = ops.removeFromMyDay(ops.addToMyDay(set(), "x"), "x");
+    expect(pos(s, "x")).toBeNull();
+    expect(activeItems(s).find((i) => i.id === "x")!.tags).toHaveLength(2);
+    expect(ops.removeFromMyDay(s, "x")).toBe(s);
+  });
+
+  it("reorderMyDay applies the order; unlisted tasks keep their order below", () => {
+    let s = ops.addToMyDay(ops.addToMyDay(set(), "x"), "y"); // y, x
+    s = ops.reorderMyDay(s, ["x", "y"]);
+    expect(myDayItems(s).map((i) => i.id)).toEqual(["x", "y"]);
+    s = ops.reorderMyDay(s, ["y"]);
+    expect(myDayItems(s).map((i) => i.id)).toEqual(["y", "x"]);
+    expect(ops.reorderMyDay(s, ["nope"]).items.map((i) => i.myDayPosition)).toEqual(
+      s.items.map((i) => i.myDayPosition),
+    );
+  });
+
+  it("completing in only some lists keeps the task in My Day", () => {
+    const s0 = ops.addToMyDay(set(), "x");
+    const s = ops.completeItem(s0, "x", [s0.tags[1].id], now);
+    expect(pos(s, "x")).not.toBeNull();
+    expect(myDayItems(s).map((i) => i.id)).toEqual(["x"]);
+  });
+
+  it("finishing a task completely removes it from My Day", () => {
+    const s0 = ops.addToMyDay(set(), "x");
+    const s = ops.completeItem(s0, "x", s0.tags.map((t) => t.id), now);
+    expect(pos(s, "x")).toBeNull();
+    expect(myDayItems(s)).toEqual([]);
+  });
+
+  it("editing keeps the flag; copies of a list do not start in My Day", () => {
+    const s0 = ops.addToMyDay(set(), "y");
+    const refs = s0.tags.slice(0, 1).map((t) => ({ id: t.id, name: t.name }));
+    expect(pos(ops.updateItem(s0, { id: "y", title: "T2", notes: "", refs }), "y")).not.toBeNull();
+    const dup = ops.duplicateList(s0, { tagId: s0.tags[0].id, newTagId: "c", idFor: (i) => `${i}-c`, now });
+    expect(pos(dup, "y-c")).toBeNull();
+    expect(pos(dup, "y")).not.toBeNull();
+  });
+
+  it("deleting a task or its only list removes it from My Day", () => {
+    const s0 = ops.addToMyDay(set(), "y");
+    expect(myDayItems(ops.deleteItem(s0, "y"))).toEqual([]);
+    expect(myDayItems(ops.deleteTag(s0, s0.tags[0].id)).map((i) => i.id)).toEqual([]);
   });
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "items" ADD COLUMN "my_day_position" integer;

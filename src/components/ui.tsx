@@ -65,12 +65,15 @@ export function Modal({
   onOpenChange,
   title,
   description,
+  tall = false,
   children,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  /** Full height on phones (for long pickers). */
+  tall?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -80,6 +83,7 @@ export function Modal({
         <Dialog.Content
           className={cn(
             "sheet-in fixed z-50 max-h-[90dvh] overflow-y-auto border border-border bg-card-strong p-5 shadow-xl outline-none backdrop-blur-xl",
+            tall && "h-[92dvh] sm:h-auto",
             "inset-x-0 bottom-0 rounded-t-2xl pb-[max(1.25rem,env(safe-area-inset-bottom))]",
             "sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
           )}

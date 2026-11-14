@@ -1,7 +1,8 @@
 "use client";
 
+import { Sun } from "lucide-react";
 import { useMemo } from "react";
-import { browseHref, tagsWithCounts } from "@/lib/tree";
+import { browseHref, myDayItems, tagsWithCounts } from "@/lib/tree";
 import { SortableLists, SortableRow } from "../dnd";
 import { NewListButton } from "../list-forms";
 import { NavLink } from "../nav-link";
@@ -10,6 +11,7 @@ import { useData } from "../store";
 export function HomeView() {
   const { snap } = useData();
   const rows = useMemo(() => tagsWithCounts(snap).filter((r) => !r.tag.parentId), [snap]);
+  const myDay = useMemo(() => myDayItems(snap).length, [snap]);
 
   return (
     <>
@@ -22,6 +24,17 @@ export function HomeView() {
 
       {/* Phone: the sidebar is a drawer, so the lists live here. */}
       <div className="space-y-6 md:hidden">
+        <NavLink
+          href="/my-day"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm active:bg-accent-soft"
+        >
+          <Sun size={22} className="shrink-0 text-accent" />
+          <span className="min-w-0 flex-1 text-[1.05rem] font-semibold">My Day</span>
+          {myDay > 0 && (
+            <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-sm font-medium text-accent">{myDay}</span>
+          )}
+        </NavLink>
+
         <h1 className="text-3xl font-bold tracking-tight text-accent">Lists</h1>
 
         {rows.length === 0 ? (

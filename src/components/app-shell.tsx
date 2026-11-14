@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, Menu } from "lucide-react";
+import { ChevronRight, Menu, Sun } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { APP_VERSION } from "@/lib/app-info";
@@ -9,13 +9,14 @@ import { cn } from "@/lib/utils";
 import {
   activeItems,
   browseHref,
+  myDayItems,
   nodeKey,
   pathKeys,
   sidebarModel,
   sidebarPath,
   type TreeNode,
 } from "@/lib/tree";
-import { AppDnd, SortableLists, SortableRow, useTagDrop } from "./dnd";
+import { AppDnd, SortableLists, SortableRow, useMyDayDrop, useTagDrop } from "./dnd";
 import { NewListButton } from "./list-forms";
 import { NavLink } from "./nav-link";
 import { useData } from "./store";
@@ -154,6 +155,7 @@ function Sidebar({
       </NavLink>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
+        <MyDayEntry area={area} />
         {roots.length === 0 && <p className="px-3 py-2 text-sm text-muted">No lists yet.</p>}
         <SortableLists area={area} ids={roots.map((r) => r.tag.id)}>
           {roots.map((node) => (
@@ -195,6 +197,36 @@ function Sidebar({
           </NavLink>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Pinned above the lists and outside the sortable order. On desktop it also accepts a dragged task. */
+function MyDayEntry({ area }: { area: "desk" | "drawer" }) {
+  const { snap } = useData();
+  const pathname = usePathname();
+  const count = useMemo(() => myDayItems(snap).length, [snap]);
+  const selected = pathname === "/my-day";
+  const target = useMyDayDrop(`myday-${area}`);
+  return (
+    <div
+      ref={target.setNodeRef}
+      className={cn(
+        "mb-1 flex items-center rounded-xl hover:bg-accent-soft",
+        selected && "bg-accent-soft text-accent",
+        target.target && "ring-1 ring-accent/30",
+        target.over && "bg-cta-soft text-cta ring-2 ring-cta",
+      )}
+    >
+      <NavLink
+        href="/my-day"
+        aria-current={selected ? "page" : undefined}
+        className={cn("flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-[0.95rem]", selected && "font-semibold")}
+      >
+        <Sun size={18} className={cn(selected ? "fill-current" : "text-accent")} />
+        <span className="min-w-0 flex-1 truncate">My Day</span>
+        {count > 0 && <span className="text-xs text-muted">{count}</span>}
+      </NavLink>
     </div>
   );
 }

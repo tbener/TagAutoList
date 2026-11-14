@@ -1,16 +1,19 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { isRememberable, landingTarget, rememberView } from "@/lib/landing";
 import type { Release } from "@/lib/changelog";
 import type { Snapshot } from "@/lib/tree";
 import { AppShell } from "./app-shell";
 import { AboutView } from "./views/about-view";
 import { ChangelogView } from "./views/changelog-view";
 import { BrowseView } from "./views/browse-view";
+import { MyDayView } from "./views/my-day-view";
 import { HistoryView } from "./views/history-view";
 import { SettingsView } from "./views/settings-view";
 import { HomeView } from "./views/home-view";
+import { navigate } from "./nav-link";
 import { DataProvider } from "./store";
 
 /**
@@ -44,9 +47,31 @@ function Shell({ footer, releases }: { footer: ReactNode; releases: Release[] })
   );
 }
 
+/**
+ * Module-level on purpose (not session storage): it describes this page load.
+ * undefined = not decided yet; a string = a cold start at "/" is being sent there.
+ */
+let coldTarget: string | null | undefined;
+
 function Views({ releases }: { releases: Release[] }) {
   const pathname = usePathname();
   const search = useSearchParams();
+  const query = search.toString();
+  // At "/" nothing is drawn until we know whether this cold start redirects (no Home flash).
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (coldTarget === undefined) coldTarget = pathname === "/" ? landingTarget() : null;
+    if (pathname !== "/") coldTarget = null; // the redirect (or a deep link) has landed
+    if (pathname === "/" && coldTarget) {
+      navigate(coldTarget, { replace: true });
+      return;
+    }
+    if (isRememberable(pathname)) rememberView(pathname + (query ? `?${query}` : ""));
+    setReady(true);
+  }, [pathname, query]);
+
+  if (pathname === "/" && !ready) return null;
   if (pathname === "/browse")
     return (
       <BrowseView
@@ -55,6 +80,7 @@ function Views({ releases }: { releases: Release[] }) {
         rename={search.get("rename") === "1"}
       />
     );
+  if (pathname === "/my-day") return <MyDayView />;
   if (pathname === "/settings") return <SettingsView />;
   if (pathname === "/about") return <AboutView />;
   if (pathname === "/changelog") return <ChangelogView releases={releases} />;

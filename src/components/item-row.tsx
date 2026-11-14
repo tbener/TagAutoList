@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Trash2 } from "lucide-react";
+import { Check, Pencil, Sun, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useItemSortable } from "./dnd";
 import { NavLink } from "./nav-link";
@@ -14,6 +14,8 @@ export type RowItem = {
   title: string;
   notes: string;
   tags: PickerTag[]; // active tags only
+  /** In My Day (a number) or not (null). */
+  myDayPosition: number | null;
 };
 
 export function ItemRow({
@@ -21,6 +23,7 @@ export function ItemRow({
   allTags,
   contextTagIds = [],
   sortTagId,
+  sortArea,
 }: {
   item: RowItem;
   allTags: PickerTag[];
@@ -28,14 +31,18 @@ export function ItemRow({
   contextTagIds?: string[];
   /** Set in a single-list view: the row can be dragged to reorder within this list. */
   sortTagId?: string;
+  /** "myday": sortable in the My Day page (no list). Otherwise sortable per `sortTagId`. */
+  sortArea?: "myday";
 }) {
   const data = useData();
   const sort = useItemSortable({
     itemId: item.id,
     tagId: sortTagId ?? "",
     title: item.title,
-    enabled: !!sortTagId,
+    enabled: !!sortTagId || sortArea === "myday",
+    area: sortArea ?? "items",
   });
+  const inMyDay = item.myDayPosition !== null;
   const [editing, setEditing] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -96,6 +103,19 @@ export function ItemRow({
           </div>
         </div>
 
+        <button
+          type="button"
+          aria-label={inMyDay ? "Remove from My Day" : "Add to My Day"}
+          title={inMyDay ? "Remove from My Day" : "Add to My Day"}
+          aria-pressed={inMyDay}
+          onClick={() => (inMyDay ? data.removeFromMyDay(item.id) : data.addToMyDay(item.id))}
+          className={cn(
+            "-mr-2 shrink-0 rounded-xl p-2.5 hover:bg-accent-soft",
+            inMyDay ? "text-accent" : "text-muted",
+          )}
+        >
+          <Sun size={18} className={cn(inMyDay && "fill-current")} />
+        </button>
         <button
           type="button"
           aria-label="Edit"

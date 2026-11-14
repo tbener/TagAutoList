@@ -216,7 +216,13 @@ export async function duplicateList(
         .from(tags)
         .where(eq(tags.userId, uid));
       const itemRows = await tx
-        .select({ id: items.id, title: items.title, notes: items.notes, createdAt: items.createdAt })
+        .select({
+          id: items.id,
+          title: items.title,
+          notes: items.notes,
+          createdAt: items.createdAt,
+          myDayPosition: items.myDayPosition,
+        })
         .from(items)
         .where(eq(items.userId, uid));
       const linkRows = tagRows.length
@@ -416,6 +422,14 @@ export async function completeItem(itemId: string, tagIds: string[]): Promise<Re
           isNull(itemTags.completedAt),
         ),
       );
+    // Fully done (no active list left): it leaves My Day. Still active elsewhere: it stays.
+    const [active] = await tx
+      .select({ tagId: itemTags.tagId })
+      .from(itemTags)
+      .where(and(eq(itemTags.itemId, itemId), isNull(itemTags.completedAt)))
+      .limit(1);
+    if (!active)
+      await tx.update(items).set({ myDayPosition: null }).where(eq(items.id, itemId));
   });
   return {};
 }
@@ -499,6 +513,68 @@ export async function reorderItems(tagId: string, orderedItemIds: string[]): Pro
       update item_tags set position = v.pos
       from (values ${values}) as v(item_id, pos)
       where item_tags.item_id = v.item_id and item_tags.tag_id = ${tagId}::uuid`);
+  });
+  return resync ? { resync } : {};
+}
+
+// ---------- My Day ----------
+
+/** Bring a task to the top of My Day (mirrors `addToMyDay`); already there: nothing changes. */
+export async function addToMyDay(itemId: string): Promise<Result> {
+  const uid = await userId();
+  await db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ pos: items.myDayPosition })
+      .from(items)
+      .where(and(eq(items.id, itemId), eq(items.userId, uid)));
+    if (!row) throw new Error("Item not found");
+    if (row.pos !== null) return;
+    const [min] = await tx
+      .select({ min: sql<number | null>`min(${items.myDayPosition})` })
+      .from(items)
+      .where(eq(items.userId, uid));
+    await tx
+      .update(items)
+      .set({ myDayPosition: min?.min == null ? 0 : Number(min.min) - 1 })
+      .where(eq(items.id, itemId));
+  });
+  return {};
+}
+
+/** Take a task out of My Day. It stays in its lists. */
+export async function removeFromMyDay(itemId: string): Promise<Result> {
+  const uid = await userId();
+  await db
+    .update(items)
+    .set({ myDayPosition: null })
+    .where(and(eq(items.id, itemId), eq(items.userId, uid)));
+  return {};
+}
+
+/** Persist a manual My Day order, top to bottom (mirrors `reorderMyDay`). */
+export async function reorderMyDay(orderedItemIds: string[]): Promise<Result> {
+  const uid = await userId();
+  let resync = false;
+  await db.transaction(async (tx) => {
+    const current = await tx
+      .select({ id: items.id })
+      .from(items)
+      .where(and(eq(items.userId, uid), isNotNull(items.myDayPosition)))
+      .orderBy(asc(items.myDayPosition), asc(items.id));
+    const known = new Set(current.map((r) => r.id));
+    const first = [...new Set(orderedItemIds)].filter((id) => known.has(id));
+    const listed = new Set(first);
+    resync = first.length !== new Set(orderedItemIds).size;
+    const order = [...first, ...current.map((r) => r.id).filter((id) => !listed.has(id))];
+    if (!order.length) return;
+    const values = sql.join(
+      order.map((id, i) => sql`(${id}::uuid, ${i}::integer)`),
+      sql`, `,
+    );
+    await tx.execute(sql`
+      update items set my_day_position = v.pos
+      from (values ${values}) as v(item_id, pos)
+      where items.id = v.item_id and items.user_id = ${uid}`);
   });
   return resync ? { resync } : {};
 }

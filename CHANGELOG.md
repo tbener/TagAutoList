@@ -2,6 +2,14 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.1.10] — 2026-11-15
+
+### Added
+- A new My Day shortlist: bring your most important tasks to the front from any list. Tasks stay there until you remove or finish them. Nothing resets overnight and nothing is added for you.
+- Add a task to My Day with the sun button on any task, by dragging it onto My Day in the sidebar (desktop), or from "Plan my day", a picker that lists every list so you can tick the tasks to bring up. My Day sits at the top of the sidebar, the menu and the phone Lists screen, and you can drag its tasks into your own order.
+- Finishing a task completely removes it from My Day. Finishing it in only some of its lists keeps it there. Removing a task from My Day never completes it.
+- In Settings, "Open the app on" lets you choose which screen the app starts on: My Day (the default), the last view you were on, or Home. It is remembered on this device.
+
 ## [0.1.9] — 2026-11-14
 
 ### Added
