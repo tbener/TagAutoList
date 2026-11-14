@@ -6,7 +6,15 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { APP_VERSION } from "@/lib/app-info";
 import { cn } from "@/lib/utils";
-import { activeItems, browseHref, nodeKey, pathKeys, sidebarModel, type TreeNode } from "@/lib/tree";
+import {
+  activeItems,
+  browseHref,
+  nodeKey,
+  pathKeys,
+  sidebarModel,
+  sidebarPath,
+  type TreeNode,
+} from "@/lib/tree";
 import { AppDnd, SortableLists, SortableRow, useTagDrop } from "./dnd";
 import { NewListButton } from "./list-forms";
 import { NavLink } from "./nav-link";
@@ -98,13 +106,20 @@ export function AppShell({ footer, children }: { footer: ReactNode; children: Re
 function Sidebar({
   area,
   footer,
-  path,
+  path: pagePath,
 }: {
   area: "desk" | "drawer";
   footer: ReactNode;
   path: string[];
 }) {
   const { snap } = useData();
+  // A nested list opened on its own is highlighted under its parent.
+  const pageKey = pagePath.join(",");
+  const path = useMemo(
+    () => sidebarPath(snap.tags, pagePath),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [snap.tags, pageKey],
+  );
   const pathKey = path.join(",");
 
   const activeSets = useMemo(

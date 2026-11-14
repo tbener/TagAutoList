@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   index,
   integer,
   pgTable,
@@ -33,6 +34,11 @@ export const tags = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     name: text().notNull(),
     position: integer().notNull().default(0),
+    /**
+     * A nested list shows only under this parent (never at the root). One level
+     * only: a parent is itself top level. Deleting the parent frees its children.
+     */
+    parentId: uuid().references((): AnyPgColumn => tags.id, { onDelete: "set null" }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("tags_user_name_idx").on(t.userId, sql`lower(${t.name})`)],

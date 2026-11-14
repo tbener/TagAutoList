@@ -2,7 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { browse, browseHref, onlyOnPath } from "@/lib/tree";
+import { branchSuggestions, browse, browseHref, onlyOnPath } from "@/lib/tree";
 import { cn } from "@/lib/utils";
 import { AddItemForm } from "../add-item-form";
 import { SortableLists } from "../dnd";
@@ -104,8 +104,9 @@ export function BrowseView({
     const { items, subTags } = browse(snap, path);
     return {
       items,
-      // Same rule as the sidebar: a tag covering every item here narrows nothing.
-      suggestions: subTags.filter((s) => s.count < items.length),
+      // Same rule as the sidebar: a tag covering every item here narrows nothing,
+      // but a parent's nested lists are always offered.
+      suggestions: branchSuggestions(snap.tags, path, items.length, subTags),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snap, pathKey]);

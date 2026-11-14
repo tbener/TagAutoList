@@ -17,9 +17,9 @@ export function resolveRefs(snap: Snapshot, names: string[], newId: () => string
 }
 
 /** The one place that decides where a new tag goes: above every existing one. */
-function withNewTagOnTop(tags: Tag[], ref: TagRef): Tag[] {
+function withNewTagOnTop(tags: Tag[], ref: TagRef, parentId: string | null = null): Tag[] {
   const position = tags.length ? Math.min(...tags.map((t) => t.position)) - 1 : 0;
-  return [...tags, { id: ref.id, name: ref.name, position }];
+  return [...tags, { id: ref.id, name: ref.name, position, parentId }];
 }
 
 /** Where a new association goes in a tag's list: above every existing one. */
@@ -223,7 +223,12 @@ export function duplicateList(
     .map((l) => l.itemId);
   const copyOf = new Map(order.map((id) => [id, p.idFor(id)]));
 
-  const tags = withNewTagOnTop(snap.tags, { id: p.newTagId, name: copyName(snap.tags, src.name) });
+  // The copy keeps the original's parent, so it appears beside it.
+  const tags = withNewTagOnTop(
+    snap.tags,
+    { id: p.newTagId, name: copyName(snap.tags, src.name) },
+    src.parentId,
+  );
   const items = [
     ...snap.items,
     ...order.map((id) => {
@@ -273,12 +278,48 @@ export function renameTag(snap: Snapshot, id: string, name: string): Snapshot {
   return { ...snap, tags: snap.tags.map((t) => (t.id === id ? { ...t, name } : t)) };
 }
 
-/** Removes the tag everywhere; items left with no association at all go too. */
+/**
+ * Why `tagId` can't be nested under `parentId`, or null when it can. One level
+ * only: the parent must be top level, a list with nested lists can't itself be
+ * nested, and nothing nests under itself. `null` (back to top level) is always fine.
+ */
+export function nestError(snap: Snapshot, tagId: string, parentId: string | null): string | null {
+  const tag = snap.tags.find((t) => t.id === tagId);
+  if (!tag) return "List not found";
+  if (parentId === null) return null;
+  const parent = snap.tags.find((t) => t.id === parentId);
+  if (!parent) return "Parent list not found";
+  if (parentId === tagId) return "A list can't be nested under itself";
+  if (parent.parentId) return "Only top-level lists can be a parent";
+  if (snap.tags.some((t) => t.parentId === tagId))
+    return "Lists that have nested lists can't be nested";
+  return null;
+}
+
+/**
+ * Nest a list under a parent, or (null) move it back to top level, where it
+ * goes to the top of the root order like a new list. Nesting keeps its
+ * position, which only orders it among its siblings. Invalid moves change nothing.
+ */
+export function setParent(snap: Snapshot, tagId: string, parentId: string | null): Snapshot {
+  if (nestError(snap, tagId, parentId)) return snap;
+  const tag = snap.tags.find((t) => t.id === tagId)!;
+  if (tag.parentId === parentId) return snap;
+  const top = parentId === null ? Math.min(...snap.tags.map((t) => t.position)) - 1 : tag.position;
+  return {
+    ...snap,
+    tags: snap.tags.map((t) => (t.id === tagId ? { ...t, parentId, position: top } : t)),
+  };
+}
+
+/** Removes the tag everywhere; items left with no association at all go too. Its nested lists return to the root. */
 export function deleteTag(snap: Snapshot, id: string): Snapshot {
   const links = snap.links.filter((l) => l.tagId !== id);
   const linked = new Set(links.map((l) => l.itemId));
   return {
-    tags: snap.tags.filter((t) => t.id !== id),
+    tags: snap.tags
+      .filter((t) => t.id !== id)
+      .map((t) => (t.parentId === id ? { ...t, parentId: null } : t)),
     items: snap.items.filter((i) => linked.has(i.id)),
     links,
   };

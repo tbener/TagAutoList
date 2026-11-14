@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownToLine, Copy, GitFork, GripVertical, ListChecks, Mail, Tags } from "lucide-react";
+import { ArrowDownToLine, Copy, CornerDownRight, Filter, GitFork, GripVertical, ListChecks, Mail, Tags } from "lucide-react";
 import type { ReactNode } from "react";
 import { APP_NAME, APP_TAGLINE, APP_VERSION, CREDITS } from "@/lib/app-info";
 import { NavLink } from "../nav-link";
@@ -30,6 +30,16 @@ const HOW: { icon: ReactNode; title: string; text: string }[] = [
     icon: <Copy size={20} />,
     title: "Duplicating a list",
     text: "Use the ⋯ menu next to a list's title to copy it, with everything still to do, into a new list.",
+  },
+  {
+    icon: <Filter size={20} />,
+    title: "Only this list",
+    text: "When a list has tasks that are also in other lists, a switch above the tasks hides those, so you see just what belongs to this list alone. It is remembered for each list on this device.",
+  },
+  {
+    icon: <CornerDownRight size={20} />,
+    title: "Nesting lists",
+    text: "Use the ⋯ menu next to a list's title to nest it under another list. A nested list leaves the top level and shows only under its parent, even when it is empty. You can open it from there, add tasks, and move it back to the top level any time.",
   },
 ];
 

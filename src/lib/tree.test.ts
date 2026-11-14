@@ -5,11 +5,19 @@ import {
   sidebarModel,
   history,
   onlyOnPath,
+  rootTags,
+  sidebarPath,
+  branchSuggestions,
   type Snapshot,
 } from "./tree";
 
 const d = (n: number) => new Date(2026, 0, n);
-const tag = (id: string, name: string, position = 0) => ({ id, name, position });
+const tag = (id: string, name: string, position = 0, parentId: string | null = null) => ({
+  id,
+  name,
+  position,
+  parentId,
+});
 const link = (itemId: string, tagId: string, position = 0) => ({
   itemId,
   tagId,
@@ -222,5 +230,83 @@ describe("onlyOnPath (Only this list)", () => {
   it("does not change what browse() offers as sub-branches", () => {
     const { subTags } = browse(snap(), ["shop"]);
     expect(subTags.map((s) => s.tag.name).sort()).toEqual(["Kid One", "Kid Two"]);
+  });
+});
+
+describe("nested lists", () => {
+  // Groceries is nested under Shopping; Kid One / Kid Two stay top level.
+  const nested = (): Snapshot => {
+    const b = base();
+    return {
+      ...b,
+      tags: [...b.tags, tag("groc", "Groceries", 5, "shop")],
+      items: [...b.items, item("eggs", "Eggs", 4)],
+      links: [...b.links, link("eggs", "groc"), link("eggs", "shop")],
+    };
+  };
+  const sets = (s: Snapshot) => activeItems(s).map((i) => i.tags.map((t) => t.id));
+
+  it("rootTags / the sidebar roots leave nested lists out", () => {
+    const s = nested();
+    expect(rootTags(s.tags).map((t) => t.name).sort()).toEqual(["Kid One", "Kid Two", "Shopping"]);
+    expect(sidebarModel(s.tags, sets(s), []).map((n) => n.tag.name).sort()).toEqual([
+      "Kid One",
+      "Kid Two",
+      "Shopping",
+    ]);
+  });
+
+  it("a parent node always lists its nested lists, even an empty one", () => {
+    const s = nested();
+    s.links = s.links.filter((l) => l.tagId !== "groc"); // Groceries is now empty
+    const shop = sidebarModel(s.tags, sets(s), ["shop"], new Set(["shop"])).find((n) => n.tag.id === "shop")!;
+    expect(shop.children.map((c) => c.tag.name)).toContain("Groceries");
+    expect(shop.children.find((c) => c.tag.id === "groc")!.count).toBe(0);
+  });
+
+  it("is not hidden by the covers-every-item rule", () => {
+    // Every Shopping item is also in Groceries.
+    const s: Snapshot = {
+      tags: [tag("shop", "Shopping"), tag("groc", "Groceries", 1, "shop")],
+      items: [item("a", "A"), item("b", "B")],
+      links: [link("a", "shop"), link("a", "groc"), link("b", "shop"), link("b", "groc")],
+    };
+    const shop = sidebarModel(s.tags, sets(s), [], new Set(["shop"]))[0];
+    expect(shop.children.map((c) => c.tag.id)).toEqual(["groc"]);
+    expect(shop.expandable).toBe(true);
+  });
+
+  it("deeper down, nested lists follow the normal co-occurrence rule", () => {
+    const s = nested();
+    const node = sidebarModel(s.tags, sets(s), ["k1"], new Set(["k1"])).find((n) => n.tag.id === "k1")!;
+    // Kid One has no Groceries items, so Groceries is not offered under it.
+    expect(node.children.map((c) => c.tag.id)).not.toContain("groc");
+  });
+
+  it("sidebarPath shows a nested list under its parent", () => {
+    const s = nested();
+    expect(sidebarPath(s.tags, ["groc"])).toEqual(["shop", "groc"]);
+    expect(sidebarPath(s.tags, ["groc", "k1"])).toEqual(["shop", "groc", "k1"]);
+    expect(sidebarPath(s.tags, ["shop", "groc"])).toEqual(["shop", "groc"]);
+    expect(sidebarPath(s.tags, ["k1"])).toEqual(["k1"]);
+    const tree = sidebarModel(s.tags, sets(s), sidebarPath(s.tags, ["groc"]), new Set(["shop"]));
+    const shop = tree.find((n) => n.tag.id === "shop")!;
+    expect(shop.children.find((c) => c.tag.id === "groc")!.selected).toBe(true);
+  });
+
+  it("branchSuggestions adds a parent's nested lists (count 0 when empty)", () => {
+    const s = nested();
+    s.links = s.links.filter((l) => l.tagId !== "groc");
+    const { items, subTags } = browse(s, ["shop"]);
+    const sug = branchSuggestions(s.tags, ["shop"], items.length, subTags);
+    expect(sug.find((x) => x.tag.id === "groc")!.count).toBe(0);
+    // Not forced in for a deeper path.
+    const { items: i2, subTags: st2 } = browse(s, ["shop", "k1"]);
+    expect(branchSuggestions(s.tags, ["shop", "k1"], i2.length, st2).some((x) => x.tag.id === "groc")).toBe(false);
+  });
+
+  it("browse of the nested list on its own still works", () => {
+    const { items } = browse(nested(), ["groc"]);
+    expect(items.map((i) => i.title)).toEqual(["Eggs"]);
   });
 });

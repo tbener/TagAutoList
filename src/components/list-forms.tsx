@@ -1,7 +1,9 @@
 "use client";
 
-import { Copy, History, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, CornerDownRight, History, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { sortTags } from "@/lib/tree";
+import { cn } from "@/lib/utils";
 import { NavLink, navigate } from "./nav-link";
 import { useData } from "./store";
 import { Button, Input, Modal } from "./ui";
@@ -198,10 +200,80 @@ function ListActions({
   );
 }
 
+/** Pick the parent for a list (or none). One level only, so only top-level lists qualify. */
+function NestDialog({ list, onClose }: { list: { id: string; name: string }; onClose: () => void }) {
+  const data = useData();
+  const current = data.snap.tags.find((t) => t.id === list.id)?.parentId ?? null;
+  const [choice, setChoice] = useState<string | null>(current);
+  const parents = sortTags(data.snap.tags.filter((t) => !t.parentId && t.id !== list.id));
+  const options: { id: string | null; label: string }[] = [
+    { id: null, label: "Top level (no parent)" },
+    ...parents.map((t) => ({ id: t.id, label: t.name })),
+  ];
+
+  return (
+    <Modal
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={current ? "Change parent" : "Nest under…"}
+      description={`“${list.name}” will show only under the list you pick, not at the top level.`}
+    >
+      <div role="radiogroup" aria-label="Parent list" className="max-h-[50dvh] space-y-1 overflow-y-auto">
+        {options.map((o) => {
+          const on = choice === o.id;
+          return (
+            <button
+              key={o.id ?? "none"}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              dir="auto"
+              onClick={() => setChoice(o.id)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-start text-sm",
+                on ? "border-accent bg-accent-soft font-medium text-accent" : "border-transparent hover:bg-accent-soft",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "grid size-5 shrink-0 place-items-center rounded-full border-2",
+                  on ? "border-accent" : "border-muted/60",
+                )}
+              >
+                {on && <span className="size-2.5 rounded-full bg-accent" />}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{o.label}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          disabled={choice === current}
+          onClick={() => {
+            const res = data.setParent(list.id, choice);
+            if (res.error) data.flash(res.error);
+            onClose();
+          }}
+        >
+          Save
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
 /** The "⋯" menu next to the list title. */
 function MoreMenu({ list }: { list: { id: string; name: string } }) {
   const data = useData();
   const [open, setOpen] = useState(false);
+  const [nesting, setNesting] = useState(false);
+  const tag = data.snap.tags.find((t) => t.id === list.id);
+  const hasChildren = data.snap.tags.some((t) => t.parentId === list.id);
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -234,7 +306,7 @@ function MoreMenu({ list }: { list: { id: string; name: string } }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-xl border border-border bg-card p-1 shadow-lg"
+          className="absolute right-0 top-full z-30 mt-1 w-60 overflow-hidden rounded-xl border border-border bg-card-strong p-1 shadow-lg"
         >
           <button
             type="button"
@@ -249,8 +321,29 @@ function MoreMenu({ list }: { list: { id: string; name: string } }) {
           >
             <Copy size={18} className="text-muted" /> Duplicate list
           </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={hasChildren}
+            className="flex w-full flex-col items-start gap-0.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-60"
+            onClick={() => {
+              setOpen(false);
+              setNesting(true);
+            }}
+          >
+            <span className="flex items-center gap-2.5">
+              <CornerDownRight size={18} className="text-muted" />
+              {tag?.parentId ? "Change parent…" : "Nest under…"}
+            </span>
+            {hasChildren && (
+              <span className="pl-[1.8rem] text-xs font-normal text-muted">
+                Lists that have nested lists can&apos;t be nested
+              </span>
+            )}
+          </button>
         </div>
       )}
+      {nesting && <NestDialog list={list} onClose={() => setNesting(false)} />}
     </div>
   );
 }
