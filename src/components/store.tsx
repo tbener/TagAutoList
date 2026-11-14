@@ -26,6 +26,8 @@ type Store = {
   notice: string | null;
   addTag(name: string): Result;
   renameTag(id: string, name: string): Result;
+  /** Nest a list under a top-level parent, or (null) back to the top level. */
+  setParent(id: string, parentId: string | null): Result;
   deleteTag(id: string): void;
   /** Copies the list's incomplete items into a new list; returns the new list's id. */
   duplicateList(id: string): Result;
@@ -178,6 +180,14 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
         if (dup(clean, id)) return { error: `“${clean}” already exists` };
         commit(ops.renameTag(ref.current, id, clean));
         save(() => api.renameTag(id, clean));
+        return {};
+      },
+
+      setParent(id, parentId) {
+        const error = ops.nestError(ref.current, id, parentId);
+        if (error) return { error };
+        commit(ops.setParent(ref.current, id, parentId));
+        save(() => api.setParent(id, parentId));
         return {};
       },
 

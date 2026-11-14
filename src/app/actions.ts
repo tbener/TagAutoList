@@ -143,7 +143,7 @@ export async function reorderTags(orderedIds: string[]): Promise<Result> {
   let resync = false;
   await db.transaction(async (tx) => {
     const mine = await tx
-      .select({ id: tags.id })
+      .select({ id: tags.id, parentId: tags.parentId })
       .from(tags)
       .where(eq(tags.userId, uid))
       .orderBy(asc(tags.position), asc(tags.name));
@@ -151,7 +151,9 @@ export async function reorderTags(orderedIds: string[]): Promise<Result> {
     const first = [...new Set(orderedIds)].filter((id) => known.has(id));
     const listed = new Set(first);
     const rest = mine.map((t) => t.id).filter((id) => !listed.has(id));
-    resync = rest.length > 0;
+    // The client only orders top-level lists; nested ones keep their order below.
+    const nested = new Set(mine.filter((t) => t.parentId).map((t) => t.id));
+    resync = rest.some((id) => !nested.has(id));
     const order = [...first, ...rest];
     if (!order.length) return;
     const values = sql.join(
@@ -164,6 +166,32 @@ export async function reorderTags(orderedIds: string[]): Promise<Result> {
       where tags.id = v.id and tags.user_id = ${uid}`);
   });
   return resync ? { resync } : {};
+}
+
+/**
+ * Nest a list under a parent, or (null) move it back to the top level, where it
+ * goes to the top of the root order. The same pure rules as the client
+ * (`ops.nestError`) are enforced here: one level only, no cycles.
+ */
+export async function setParent(tagId: string, parentId: string | null): Promise<Result> {
+  const uid = await userId();
+  let error: string | undefined;
+  await db.transaction(async (tx) => {
+    const rows = await tx
+      .select({ id: tags.id, name: tags.name, position: tags.position, parentId: tags.parentId })
+      .from(tags)
+      .where(eq(tags.userId, uid));
+    const snap: Snapshot = { tags: rows, items: [], links: [] };
+    error = ops.nestError(snap, tagId, parentId) ?? undefined;
+    if (error) return;
+    const after = ops.setParent(snap, tagId, parentId);
+    const next = after.tags.find((t) => t.id === tagId)!;
+    await tx
+      .update(tags)
+      .set({ parentId, position: next.position })
+      .where(and(eq(tags.id, tagId), eq(tags.userId, uid)));
+  });
+  return error ? { error, resync: true } : {};
 }
 
 /**
@@ -184,7 +212,7 @@ export async function duplicateList(
     await db.transaction(async (tx) => {
       await ownedTag(tx, uid, tagId);
       const tagRows = await tx
-        .select({ id: tags.id, name: tags.name, position: tags.position })
+        .select({ id: tags.id, name: tags.name, position: tags.position, parentId: tags.parentId })
         .from(tags)
         .where(eq(tags.userId, uid));
       const itemRows = await tx
@@ -207,7 +235,13 @@ export async function duplicateList(
 
       await tx
         .insert(tags)
-        .values({ ...idField(newTag.id), userId: uid, name: newTag.name, position: newTag.position });
+        .values({
+          ...idField(newTag.id),
+          userId: uid,
+          name: newTag.name,
+          position: newTag.position,
+          parentId: newTag.parentId,
+        });
       const knownItems = new Set(before.items.map((i) => i.id));
       const newItems = after.items.filter((i) => !knownItems.has(i.id));
       if (newItems.length)

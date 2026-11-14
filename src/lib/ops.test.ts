@@ -283,3 +283,64 @@ describe("ops", () => {
     expect(activeItems(ops.restoreCompletion(done, "x", kid)).find((i) => i.id === "x")!.tags).toHaveLength(2);
   });
 });
+
+describe("nested lists", () => {
+  const three = () => {
+    const refs = ops.resolveRefs(empty(), ["A", "B", "C"], newId);
+    return ops.addItem(empty(), { id: "i", title: "T", refs, now });
+  };
+  const id = (s: Snapshot, name: string) => s.tags.find((t) => t.name === name)!.id;
+
+  it("nests a list under a top-level parent and keeps its position", () => {
+    const s = three();
+    const before = s.tags.find((t) => t.name === "B")!.position;
+    const n = ops.setParent(s, id(s, "B"), id(s, "A"));
+    const b = n.tags.find((t) => t.name === "B")!;
+    expect(b.parentId).toBe(id(s, "A"));
+    expect(b.position).toBe(before);
+  });
+
+  it("moving back to the top level puts it at the top of the root order", () => {
+    let s = three();
+    s = ops.setParent(s, id(s, "B"), id(s, "A"));
+    s = ops.setParent(s, id(s, "B"), null);
+    const b = s.tags.find((t) => t.name === "B")!;
+    expect(b.parentId).toBeNull();
+    expect(sortTags(s.tags)[0].id).toBe(b.id);
+  });
+
+  it("rejects cycles and more than one level", () => {
+    let s = three();
+    const [a, b, c] = ["A", "B", "C"].map((n) => id(s, n));
+    expect(ops.nestError(s, a, a)).toMatch(/itself/);
+    s = ops.setParent(s, b, a); // B under A
+    expect(ops.nestError(s, c, b)).toMatch(/top-level/); // the parent must be top level
+    expect(ops.nestError(s, a, c)).toMatch(/nested lists/); // A has a nested list, so it can't be nested
+    expect(ops.nestError(s, a, b)).not.toBeNull(); // would be a cycle
+    expect(ops.setParent(s, a, c)).toBe(s); // invalid: nothing changes
+    expect(ops.nestError(s, c, a)).toBeNull();
+    expect(ops.nestError(s, "nope", a)).toMatch(/not found/);
+    expect(ops.nestError(s, c, "nope")).toMatch(/not found/);
+    expect(ops.nestError(s, b, null)).toBeNull();
+  });
+
+  it("deleting the parent frees its nested lists back to the root", () => {
+    let s = three();
+    s = ops.setParent(s, id(s, "B"), id(s, "A"));
+    const after = ops.deleteTag(s, id(s, "A"));
+    expect(after.tags.find((t) => t.name === "B")!.parentId).toBeNull();
+    expect(after.tags.find((t) => t.name === "A")).toBeUndefined();
+  });
+
+  it("duplicating a nested list keeps its parent", () => {
+    let s = three();
+    s = ops.setParent(s, id(s, "B"), id(s, "A"));
+    const dup = ops.duplicateList(s, { tagId: id(s, "B"), newTagId: "copy", idFor: () => "ci", now });
+    expect(dup.tags.find((t) => t.id === "copy")!.parentId).toBe(id(s, "A"));
+  });
+
+  it("new lists are always top level", () => {
+    const s = ops.addTag(empty(), { id: "x", name: "X" });
+    expect(s.tags[0].parentId).toBeNull();
+  });
+});

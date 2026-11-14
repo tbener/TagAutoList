@@ -1,6 +1,6 @@
 {
   "name": "tagautolist",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "db:push": "drizzle-kit push",
+    "db:migrate": "node --env-file=.env.local node_modules/drizzle-kit/bin.cjs push",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

@@ -9,7 +9,7 @@ import { useData } from "../store";
 
 export function HomeView() {
   const { snap } = useData();
-  const rows = useMemo(() => tagsWithCounts(snap), [snap]);
+  const rows = useMemo(() => tagsWithCounts(snap).filter((r) => !r.tag.parentId), [snap]);
 
   return (
     <>

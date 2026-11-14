@@ -4,7 +4,13 @@
  * can be unit-tested and later reused (e.g. recurrence, search).
  */
 
-export type Tag = { id: string; name: string; position: number };
+export type Tag = {
+  id: string;
+  name: string;
+  position: number;
+  /** Set for a nested list: it appears only under this (top-level) parent. */
+  parentId: string | null;
+};
 export type Item = {
   id: string;
   title: string;
@@ -29,6 +35,44 @@ const byName = (a: Tag, b: Tag) => a.name.localeCompare(b.name);
 export const byPosition = (a: Tag, b: Tag) => a.position - b.position || byName(a, b);
 
 export const sortTags = (tags: Tag[]) => [...tags].sort(byPosition);
+
+/** Lists that appear at the top level: everything that isn't nested. */
+export const rootTags = (tags: Tag[]) => tags.filter((t) => !t.parentId);
+
+/** The lists nested under `parentId`, in their own order. */
+export const nestedTags = (tags: Tag[], parentId: string) =>
+  sortTags(tags.filter((t) => t.parentId === parentId));
+
+/**
+ * For the sidebar only: a path that starts with a nested list is shown as if
+ * its parent came first, so the nested list is highlighted under the parent.
+ * (What the page itself shows is unchanged.)
+ */
+export function sidebarPath(tags: Tag[], path: string[]): string[] {
+  const first = tags.find((t) => t.id === path[0]);
+  const parent = first?.parentId && tags.find((t) => t.id === first.parentId);
+  return parent ? [parent.id, ...path.filter((id) => id !== parent.id)] : path;
+}
+
+/**
+ * Sub-list suggestions for a list view: the co-occurring lists that narrow
+ * things down, plus (at a parent's own view) its nested lists, always, even
+ * when no item has both or the nested list is empty.
+ */
+export function branchSuggestions(
+  tags: Tag[],
+  path: string[],
+  itemCount: number,
+  subTags: SubTag[],
+): SubTag[] {
+  const out = subTags.filter((s) => s.count < itemCount);
+  if (path.length === 1)
+    for (const t of nestedTags(tags, path[0])) {
+      if (out.some((s) => s.tag.id === t.id)) continue;
+      out.push({ tag: t, count: subTags.find((s) => s.tag.id === t.id)?.count ?? 0 });
+    }
+  return out.sort((a, b) => byPosition(a.tag, b.tag));
+}
 
 /** Items that still have at least one incomplete association, with those tags. */
 export function activeItems(snap: Snapshot): ItemView[] {
@@ -64,6 +108,15 @@ export function orderedTagLinks(snap: Snapshot, tagId: string): Link[] {
         (created.get(b.itemId) ?? 0) - (created.get(a.itemId) ?? 0) ||
         a.itemId.localeCompare(b.itemId),
     );
+}
+
+/**
+ * "Only this list": keep the items whose *active* tags are exactly the tags of
+ * `path` (nothing else). Display-only; sub-branches are still computed from all items.
+ */
+export function onlyOnPath(items: ItemView[], path: string[]): ItemView[] {
+  const want = new Set(path);
+  return items.filter((i) => i.tags.length === want.size && i.tags.every((t) => want.has(t.id)));
 }
 
 export type SubTag = { tag: Tag; count: number };
@@ -171,9 +224,16 @@ export function sidebarModel(
       for (const id of s) if (!nodePath.includes(id)) co.set(id, (co.get(id) ?? 0) + 1);
     // A child covering every item of its parent narrows nothing, so it isn't
     // shown as a sub-branch (unless the current path goes through it).
-    const subTags = [...co]
-      .filter(([id, n]) => n < sets.length || (onPath && path[nodePath.length] === id))
-      .map(([id]) => byId.get(id))
+    const wanted = new Set(
+      [...co]
+        .filter(([id, n]) => n < sets.length || (onPath && path[nodePath.length] === id))
+        .map(([id]) => id),
+    );
+    // A parent's own node always lists its nested lists, even empty ones.
+    if (nodePath.length === 1)
+      for (const t of nestedTags(tags, nodePath[0])) wanted.add(t.id);
+    const subTags = [...wanted]
+      .map((id) => byId.get(id))
       .filter((t): t is Tag => !!t)
       .sort(byPosition);
     return {
@@ -188,8 +248,8 @@ export function sidebarModel(
     };
   };
 
-  // Every tag is a root, in the user's manual order.
-  return sortTags(tags).map((t) => build([t.id]));
+  // Roots are the top-level lists (nested ones live under their parent), in the user's order.
+  return sortTags(rootTags(tags)).map((t) => build([t.id]));
 }
 
 export function browseHref(path: string[]) {

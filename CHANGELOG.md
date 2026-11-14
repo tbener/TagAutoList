@@ -2,6 +2,13 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.1.9] — 2026-11-14
+
+### Added
+- A new "Only this list" switch above a list's tasks hides the tasks that are also in other lists, so you see just what belongs to that list alone. It shows how many are hidden, is remembered for each list on this device, and turns off dragging while it is on.
+- Lists can now be nested under another list from the ⋯ menu next to the title ("Nest under…" / "Change parent…"). A nested list leaves the top level (sidebar, menu and Lists screen) and shows only under its parent, even when it is empty. Moving it back to the top level puts it at the top, and deleting the parent brings its nested lists back to the top level.
+- The About page describes both.
+
 ## [0.1.8] — 2026-11-10
 
 ### Fixed

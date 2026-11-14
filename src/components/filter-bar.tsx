@@ -45,7 +45,7 @@ export function FilterBar({
                 >
                   <Plus size={16} />
                   {tag.name}
-                  <span className="text-xs opacity-70">{count}</span>
+                  {count > 0 && <span className="text-xs opacity-70">{count}</span>}
                 </NavLink>
               </li>
             ))}
