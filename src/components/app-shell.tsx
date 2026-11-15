@@ -2,7 +2,7 @@
 
 import { UP_NEXT } from "@/lib/terms";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, ChevronsRight, Menu } from "lucide-react";
+import { ChevronRight, ArrowUp, Menu } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { APP_VERSION } from "@/lib/app-info";
@@ -228,7 +228,7 @@ function UpNextEntry({ area }: { area: "desk" | "drawer" }) {
           aria-current={selected ? "page" : undefined}
           className="flex min-w-0 items-center gap-3 px-3 py-3 text-[0.95rem]"
         >
-          <ChevronsRight size={20} strokeWidth={2.5} className="shrink-0 text-day" />
+          <ArrowUp size={20} strokeWidth={2.5} className="shrink-0 text-day" />
           <span className={cn("min-w-0 flex-1 truncate", selected && "font-semibold text-day-ink")}>
             {UP_NEXT.name}
           </span>

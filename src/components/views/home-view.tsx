@@ -1,7 +1,7 @@
 "use client";
 
 import { UP_NEXT } from "@/lib/terms";
-import { ChevronsRight } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { useMemo } from "react";
 import { browseHref, upNextItems, tagsWithCounts } from "@/lib/tree";
 import { SortableLists, SortableRow } from "../dnd";
@@ -29,7 +29,7 @@ export function HomeView() {
           href={UP_NEXT.href}
           className="flex items-center gap-3.5 rounded-3xl border border-[var(--day-border)] bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] px-5 py-5 text-day-ink shadow-[var(--day-shadow)] active:opacity-90"
         >
-          <ChevronsRight size={32} strokeWidth={2.5} className="shrink-0 text-day" />
+          <ArrowUp size={32} strokeWidth={2.5} className="shrink-0 text-day" />
           <span className="min-w-0 flex-1 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight">
             {UP_NEXT.name}
           </span>

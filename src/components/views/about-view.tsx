@@ -1,7 +1,7 @@
 "use client";
 
 import { UP_NEXT } from "@/lib/terms";
-import { ArrowDownToLine, ChevronsRight, Copy, CornerDownRight, Filter, GitFork, GripVertical, ListChecks, Mail, Tags } from "lucide-react";
+import { ArrowDownToLine, ArrowUp, Copy, CornerDownRight, Filter, GitFork, GripVertical, ListChecks, Mail, Tags } from "lucide-react";
 import type { ReactNode } from "react";
 import { APP_NAME, APP_TAGLINE, APP_VERSION, CREDITS } from "@/lib/app-info";
 import { NavLink } from "../nav-link";
@@ -38,7 +38,7 @@ const HOW: { icon: ReactNode; title: string; text: string }[] = [
     text: "When a list has tasks that are also in other lists, a switch above the tasks hides those, so you see just what belongs to this list alone. It is remembered for each list on this device.",
   },
   {
-    icon: <ChevronsRight size={20} />,
+    icon: <ArrowUp size={20} />,
     title: UP_NEXT.name,
     text: UP_NEXT.aboutText,
   },

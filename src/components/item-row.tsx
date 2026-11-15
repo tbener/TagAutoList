@@ -1,7 +1,7 @@
 "use client";
 
 import { UP_NEXT } from "@/lib/terms";
-import { Check, ChevronsRight, Pencil, Trash2 } from "lucide-react";
+import { Check, ArrowUp, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useItemSortable } from "./dnd";
 import { NavLink } from "./nav-link";
@@ -127,7 +127,7 @@ export function ItemRow({
               : "text-muted focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100",
           )}
         >
-          <ChevronsRight size={18} strokeWidth={inUpNext ? 3 : 2} />
+          <ArrowUp size={18} strokeWidth={inUpNext ? 3 : 2} />
         </button>
         <button
           type="button"

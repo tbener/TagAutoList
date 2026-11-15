@@ -20,5 +20,5 @@ export const UP_NEXT = {
   /** "2 of 5 in Up Next" in the planning sheet. */
   chosen: (chosen: number, total: number) => `${chosen} of ${total} in ${UP_NEXT_NAME}`,
   landingHint: "Your shortlist",
-  aboutText: `A hand-picked shortlist that brings your most important tasks to the front. Use the arrow button on any task, drag it onto ${UP_NEXT_NAME} in the sidebar, or use "Plan ${UP_NEXT_NAME}" to pick from all your lists. Tasks stay in their lists and in ${UP_NEXT_NAME} until you remove or finish them; nothing resets. Drag them into your own order. In Settings you can choose which screen the app opens on.`,
+  aboutText: `A hand-picked shortlist that brings your most important tasks to the front. Use the up-arrow button on any task, drag it onto ${UP_NEXT_NAME} in the sidebar, or use "Plan ${UP_NEXT_NAME}" to pick from all your lists. Tasks stay in their lists and in ${UP_NEXT_NAME} until you remove or finish them; nothing resets. Drag them into your own order. In Settings you can choose which screen the app opens on.`,
 } as const;

@@ -1,7 +1,7 @@
 "use client";
 
 import { UP_NEXT } from "@/lib/terms";
-import { ChevronsRight } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { upNextItems } from "@/lib/tree";
 import { SortableLists } from "../dnd";
@@ -55,14 +55,14 @@ export function UpNextView() {
             className="border-[var(--day-border)] bg-[var(--day-card)] text-day-ink hover:bg-day-soft"
             onClick={() => setPlanning(true)}
           >
-            <ChevronsRight size={16} /> {UP_NEXT.plan}
+            <ArrowUp size={16} /> {UP_NEXT.plan}
           </Button>
         )}
       </header>
 
       {items.length === 0 ? (
         <div className="rise rounded-3xl border-2 border-dashed border-[var(--day-border)] p-10 text-center">
-          <ChevronsRight size={36} className="mx-auto mb-3 text-day" />
+          <ArrowUp size={36} className="mx-auto mb-3 text-day" />
           <p className="font-semibold">{UP_NEXT.empty}</p>
           <p className="mt-1 text-sm text-muted">{UP_NEXT.emptyHint}</p>
           <Button className="bg-day mt-4" onClick={() => setPlanning(true)}>
