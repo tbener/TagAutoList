@@ -1,8 +1,9 @@
 "use client";
 
-import { Sun } from "lucide-react";
+import { UP_NEXT } from "@/lib/terms";
+import { ChevronsRight } from "lucide-react";
 import { useMemo } from "react";
-import { browseHref, myDayItems, tagsWithCounts } from "@/lib/tree";
+import { browseHref, upNextItems, tagsWithCounts } from "@/lib/tree";
 import { SortableLists, SortableRow } from "../dnd";
 import { NewListButton } from "../list-forms";
 import { NavLink } from "../nav-link";
@@ -11,7 +12,7 @@ import { useData } from "../store";
 export function HomeView() {
   const { snap } = useData();
   const rows = useMemo(() => tagsWithCounts(snap).filter((r) => !r.tag.parentId), [snap]);
-  const myDay = useMemo(() => myDayItems(snap).length, [snap]);
+  const upNext = useMemo(() => upNextItems(snap).length, [snap]);
 
   return (
     <>
@@ -25,15 +26,15 @@ export function HomeView() {
       {/* Phone: the sidebar is a drawer, so the lists live here. */}
       <div className="space-y-6 md:hidden">
         <NavLink
-          href="/my-day"
+          href={UP_NEXT.href}
           className="flex items-center gap-3.5 rounded-3xl border border-[var(--day-border)] bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] px-5 py-5 text-day-ink shadow-[var(--day-shadow)] active:opacity-90"
         >
-          <Sun size={30} className="shrink-0 fill-current text-day" />
+          <ChevronsRight size={32} strokeWidth={2.5} className="shrink-0 text-day" />
           <span className="min-w-0 flex-1 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight">
-            My Day
+            {UP_NEXT.name}
           </span>
-          {myDay > 0 && (
-            <span className="rounded-full bg-day-soft px-3 py-0.5 text-base font-semibold">{myDay}</span>
+          {upNext > 0 && (
+            <span className="rounded-full bg-day-soft px-3 py-0.5 text-base font-semibold">{upNext}</span>
           )}
         </NavLink>
 

@@ -224,7 +224,7 @@ h1, h2 {
   .glass { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
-/* ---- My Day: a warm sunrise family used only for My Day ---- */
+/* ---- Up Next: a warm sunrise family used only for Up Next ---- */
 :root {
   --day: #e8731f;
   --day-2: #f0457a;
@@ -261,26 +261,26 @@ h1, h2 {
   --day-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 22px 40px -16px rgb(0 0 0 / 0.75);
 }
 
-/* While the My Day page is open the whole app background turns to dawn. */
-html[data-page="my-day"] {
+/* While the Up Next page is open the whole app background turns to dawn. */
+html[data-page="up-next"] {
   --glow-a: rgb(255 170 80 / 0.42);
   --glow-b: rgb(255 110 130 / 0.3);
   --glow-c: rgb(255 200 120 / 0.28);
 }
-html[data-page="my-day"][data-theme="dark"] {
+html[data-page="up-next"][data-theme="dark"] {
   --glow-a: rgb(255 130 50 / 0.3);
   --glow-b: rgb(255 70 110 / 0.22);
   --glow-c: rgb(255 160 70 / 0.14);
 }
 @media (prefers-color-scheme: dark) {
-  html[data-page="my-day"]:not([data-theme="light"]) {
+  html[data-page="up-next"]:not([data-theme="light"]) {
     --glow-a: rgb(255 130 50 / 0.3);
     --glow-b: rgb(255 70 110 / 0.22);
     --glow-c: rgb(255 160 70 / 0.14);
   }
 }
 
-/* The framed My Day panel with its sun. */
+/* The framed Up Next panel with its sun. */
 .day-frame {
   position: relative;
   overflow: hidden;
@@ -302,8 +302,8 @@ html[data-page="my-day"][data-theme="dark"] {
   height: 300px;
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle, var(--day) 0 28%, transparent 29%);
-  opacity: 0.4;
+  background: radial-gradient(circle, var(--day-wash-a), transparent 66%);
+  opacity: 0.5;
 }
 .day-sun::before,
 .day-sun::after {

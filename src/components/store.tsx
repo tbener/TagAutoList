@@ -42,10 +42,10 @@ type Store = {
   /** A short neutral confirmation message. */
   toast: string | null;
   flash(message: string): void;
-  /** My Day. `addToMyDay` returns false (and does nothing) when the task is already there. */
-  addToMyDay(itemId: string): boolean;
-  removeFromMyDay(itemId: string): void;
-  reorderMyDay(orderedItemIds: string[]): void;
+  /** Up Next. `addToUpNext` returns false (and does nothing) when the task is already there. */
+  addToUpNext(itemId: string): boolean;
+  removeFromUpNext(itemId: string): void;
+  reorderUpNext(orderedItemIds: string[]): void;
   completeItem(id: string, tagIds: string[]): void;
   restoreCompletion(itemId: string, tagId: string): void;
 };
@@ -270,22 +270,22 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
         save(() => api.removeItemFromTags(id, tagIds));
       },
 
-      addToMyDay(itemId) {
-        if (ops.inMyDay(ref.current, itemId) || !ref.current.items.some((i) => i.id === itemId)) return false;
-        commit(ops.addToMyDay(ref.current, itemId));
-        save(() => api.addToMyDay(itemId));
+      addToUpNext(itemId) {
+        if (ops.inUpNext(ref.current, itemId) || !ref.current.items.some((i) => i.id === itemId)) return false;
+        commit(ops.addToUpNext(ref.current, itemId));
+        save(() => api.addToUpNext(itemId));
         return true;
       },
 
-      removeFromMyDay(itemId) {
-        if (!ops.inMyDay(ref.current, itemId)) return;
-        commit(ops.removeFromMyDay(ref.current, itemId));
-        save(() => api.removeFromMyDay(itemId));
+      removeFromUpNext(itemId) {
+        if (!ops.inUpNext(ref.current, itemId)) return;
+        commit(ops.removeFromUpNext(ref.current, itemId));
+        save(() => api.removeFromUpNext(itemId));
       },
 
-      reorderMyDay(orderedItemIds) {
-        commit(ops.reorderMyDay(ref.current, orderedItemIds));
-        save(() => api.reorderMyDay(orderedItemIds));
+      reorderUpNext(orderedItemIds) {
+        commit(ops.reorderUpNext(ref.current, orderedItemIds));
+        save(() => api.reorderUpNext(orderedItemIds));
       },
 
       completeItem(id, tagIds) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { Home, Monitor, Moon, Sun, Undo2 } from "lucide-react";
+import { UP_NEXT } from "@/lib/terms";
+import { ChevronsRight, Home, Monitor, Moon, Sun, Undo2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { readLanding, saveLanding, type Landing } from "@/lib/landing";
 import { applyTheme, readTheme, type Theme } from "@/lib/theme";
@@ -13,14 +14,14 @@ const OPTIONS: { value: Theme; label: string; hint: string; icon: ReactNode }[] 
 ];
 
 const LANDING: { value: Landing; label: string; hint: string; icon: ReactNode }[] = [
-  { value: "my-day", label: "My Day", hint: "Your shortlist", icon: <Sun size={22} /> },
+  { value: "up-next", label: UP_NEXT.name, hint: UP_NEXT.landingHint, icon: <ChevronsRight size={22} /> },
   { value: "last", label: "Last view", hint: "Where you left off", icon: <Undo2 size={22} /> },
   { value: "home", label: "Home", hint: "Your lists", icon: <Home size={22} /> },
 ];
 
 export function SettingsView() {
   const [theme, setTheme] = useState<Theme>("auto");
-  const [landing, setLanding] = useState<Landing>("my-day");
+  const [landing, setLanding] = useState<Landing>("up-next");
   useEffect(() => {
     setTheme(readTheme());
     setLanding(readLanding());

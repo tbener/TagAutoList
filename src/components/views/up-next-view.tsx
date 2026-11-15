@@ -1,11 +1,12 @@
 "use client";
 
-import { Sun } from "lucide-react";
+import { UP_NEXT } from "@/lib/terms";
+import { ChevronsRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { myDayItems } from "@/lib/tree";
+import { upNextItems } from "@/lib/tree";
 import { SortableLists } from "../dnd";
 import { ItemRow } from "../item-row";
-import { PlanMyDay } from "../plan-my-day";
+import { PlanUpNext } from "../plan-up-next";
 import { useData } from "../store";
 import { Button } from "../ui";
 
@@ -21,15 +22,15 @@ function useToday() {
   return now;
 }
 
-export function MyDayView() {
+export function UpNextView() {
   const { snap } = useData();
-  const items = useMemo(() => myDayItems(snap), [snap]);
+  const items = useMemo(() => upNextItems(snap), [snap]);
   const [planning, setPlanning] = useState(false);
   const today = useToday();
 
   // Dawn background for the whole app while this page is open.
   useEffect(() => {
-    document.documentElement.dataset.page = "my-day";
+    document.documentElement.dataset.page = "up-next";
     return () => {
       delete document.documentElement.dataset.page;
     };
@@ -42,7 +43,7 @@ export function MyDayView() {
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-4xl font-bold leading-none tracking-tight md:text-5xl">
-            {today ? today.toLocaleDateString(undefined, { weekday: "long" }) : "My Day"}
+            {today ? today.toLocaleDateString(undefined, { weekday: "long" }) : UP_NEXT.name}
           </h1>
           <p className="mt-1.5 font-[family-name:var(--font-display)] text-lg font-medium text-day-ink">
             {today ? today.toLocaleDateString(undefined, { day: "numeric", month: "long" }) : " "}
@@ -54,31 +55,31 @@ export function MyDayView() {
             className="border-[var(--day-border)] bg-[var(--day-card)] text-day-ink hover:bg-day-soft"
             onClick={() => setPlanning(true)}
           >
-            <Sun size={16} /> Plan my day
+            <ChevronsRight size={16} /> {UP_NEXT.plan}
           </Button>
         )}
       </header>
 
       {items.length === 0 ? (
         <div className="rise rounded-3xl border-2 border-dashed border-[var(--day-border)] p-10 text-center">
-          <Sun size={32} className="mx-auto mb-3 text-day" />
-          <p className="font-semibold">Nothing in My Day yet.</p>
-          <p className="mt-1 text-sm text-muted">Bring up what matters.</p>
+          <ChevronsRight size={36} className="mx-auto mb-3 text-day" />
+          <p className="font-semibold">{UP_NEXT.empty}</p>
+          <p className="mt-1 text-sm text-muted">{UP_NEXT.emptyHint}</p>
           <Button className="bg-day mt-4" onClick={() => setPlanning(true)}>
-            Plan my day
+            {UP_NEXT.plan}
           </Button>
         </div>
       ) : (
-        <SortableLists area="myday" ids={items.map((i) => i.id)}>
+        <SortableLists area="upnext" ids={items.map((i) => i.id)}>
           <ul className="space-y-3.5">
             {items.map((item) => (
-              <ItemRow key={item.id} item={item} allTags={snap.tags} sortArea="myday" />
+              <ItemRow key={item.id} item={item} allTags={snap.tags} sortArea="upnext" />
             ))}
           </ul>
         </SortableLists>
       )}
 
-      <PlanMyDay open={planning} onClose={() => setPlanning(false)} />
+      <PlanUpNext open={planning} onClose={() => setPlanning(false)} />
       </div>
     </div>
   );

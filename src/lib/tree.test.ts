@@ -5,7 +5,7 @@ import {
   sidebarModel,
   history,
   onlyOnPath,
-  myDayItems,
+  upNextItems,
   rootTags,
   sidebarPath,
   branchSuggestions,
@@ -25,12 +25,12 @@ const link = (itemId: string, tagId: string, position = 0) => ({
   completedAt: null,
   position,
 });
-const item = (id: string, title: string, day = 1, myDayPosition: number | null = null) => ({
+const item = (id: string, title: string, day = 1, upNextPosition: number | null = null) => ({
   id,
   title,
   notes: "",
   createdAt: d(day),
-  myDayPosition,
+  upNextPosition,
 });
 
 // The worked example from the spec.
@@ -313,13 +313,13 @@ describe("nested lists", () => {
   });
 });
 
-describe("myDayItems", () => {
-  it("returns only active items in My Day, in manual order, with their active tags", () => {
+describe("upNextItems", () => {
+  it("returns only active items in Up Next, in manual order, with their active tags", () => {
     const s = base();
     s.items = [item("chair", "Chair", 1, 2), item("table", "Table", 2, 1), item("lamp", "Lamp", 3)];
     s.links = [link("chair", "shop"), link("chair", "k1"), link("table", "shop"), link("lamp", "shop")];
-    expect(myDayItems(s).map((i) => i.title)).toEqual(["Table", "Chair"]);
-    expect(myDayItems(s)[1].tags.map((t) => t.id).sort()).toEqual(["k1", "shop"]);
+    expect(upNextItems(s).map((i) => i.title)).toEqual(["Table", "Chair"]);
+    expect(upNextItems(s)[1].tags.map((t) => t.id).sort()).toEqual(["k1", "shop"]);
   });
 
   it("ignores a flagged item with nothing active and shows only still-active tags", () => {
@@ -330,7 +330,7 @@ describe("myDayItems", () => {
       { ...link("chair", "k1"), completedAt: d(9) },
       { ...link("gone", "shop"), completedAt: d(9) },
     ];
-    const out = myDayItems(s);
+    const out = upNextItems(s);
     expect(out.map((i) => i.id)).toEqual(["chair"]);
     expect(out[0].tags.map((t) => t.id)).toEqual(["shop"]);
   });

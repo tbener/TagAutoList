@@ -221,7 +221,7 @@ export async function duplicateList(
           title: items.title,
           notes: items.notes,
           createdAt: items.createdAt,
-          myDayPosition: items.myDayPosition,
+          upNextPosition: items.upNextPosition,
         })
         .from(items)
         .where(eq(items.userId, uid));
@@ -422,14 +422,14 @@ export async function completeItem(itemId: string, tagIds: string[]): Promise<Re
           isNull(itemTags.completedAt),
         ),
       );
-    // Fully done (no active list left): it leaves My Day. Still active elsewhere: it stays.
+    // Fully done (no active list left): it leaves Up Next. Still active elsewhere: it stays.
     const [active] = await tx
       .select({ tagId: itemTags.tagId })
       .from(itemTags)
       .where(and(eq(itemTags.itemId, itemId), isNull(itemTags.completedAt)))
       .limit(1);
     if (!active)
-      await tx.update(items).set({ myDayPosition: null }).where(eq(items.id, itemId));
+      await tx.update(items).set({ upNextPosition: null }).where(eq(items.id, itemId));
   });
   return {};
 }
@@ -517,50 +517,50 @@ export async function reorderItems(tagId: string, orderedItemIds: string[]): Pro
   return resync ? { resync } : {};
 }
 
-// ---------- My Day ----------
+// ---------- Up Next ----------
 
-/** Bring a task to the top of My Day (mirrors `addToMyDay`); already there: nothing changes. */
-export async function addToMyDay(itemId: string): Promise<Result> {
+/** Bring a task to the top of Up Next (mirrors `addToUpNext`); already there: nothing changes. */
+export async function addToUpNext(itemId: string): Promise<Result> {
   const uid = await userId();
   await db.transaction(async (tx) => {
     const [row] = await tx
-      .select({ pos: items.myDayPosition })
+      .select({ pos: items.upNextPosition })
       .from(items)
       .where(and(eq(items.id, itemId), eq(items.userId, uid)));
     if (!row) throw new Error("Item not found");
     if (row.pos !== null) return;
     const [min] = await tx
-      .select({ min: sql<number | null>`min(${items.myDayPosition})` })
+      .select({ min: sql<number | null>`min(${items.upNextPosition})` })
       .from(items)
       .where(eq(items.userId, uid));
     await tx
       .update(items)
-      .set({ myDayPosition: min?.min == null ? 0 : Number(min.min) - 1 })
+      .set({ upNextPosition: min?.min == null ? 0 : Number(min.min) - 1 })
       .where(eq(items.id, itemId));
   });
   return {};
 }
 
-/** Take a task out of My Day. It stays in its lists. */
-export async function removeFromMyDay(itemId: string): Promise<Result> {
+/** Take a task out of Up Next. It stays in its lists. */
+export async function removeFromUpNext(itemId: string): Promise<Result> {
   const uid = await userId();
   await db
     .update(items)
-    .set({ myDayPosition: null })
+    .set({ upNextPosition: null })
     .where(and(eq(items.id, itemId), eq(items.userId, uid)));
   return {};
 }
 
-/** Persist a manual My Day order, top to bottom (mirrors `reorderMyDay`). */
-export async function reorderMyDay(orderedItemIds: string[]): Promise<Result> {
+/** Persist a manual Up Next order, top to bottom (mirrors `reorderUpNext`). */
+export async function reorderUpNext(orderedItemIds: string[]): Promise<Result> {
   const uid = await userId();
   let resync = false;
   await db.transaction(async (tx) => {
     const current = await tx
       .select({ id: items.id })
       .from(items)
-      .where(and(eq(items.userId, uid), isNotNull(items.myDayPosition)))
-      .orderBy(asc(items.myDayPosition), asc(items.id));
+      .where(and(eq(items.userId, uid), isNotNull(items.upNextPosition)))
+      .orderBy(asc(items.upNextPosition), asc(items.id));
     const known = new Set(current.map((r) => r.id));
     const first = [...new Set(orderedItemIds)].filter((id) => known.has(id));
     const listed = new Set(first);
@@ -572,7 +572,7 @@ export async function reorderMyDay(orderedItemIds: string[]): Promise<Result> {
       sql`, `,
     );
     await tx.execute(sql`
-      update items set my_day_position = v.pos
+      update items set up_next_position = v.pos
       from (values ${values}) as v(item_id, pos)
       where items.id = v.item_id and items.user_id = ${uid}`);
   });

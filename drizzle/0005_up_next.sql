@@ -1,0 +1,1 @@
+ALTER TABLE "items" ADD COLUMN "up_next_position" integer;

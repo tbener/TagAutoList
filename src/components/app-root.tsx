@@ -1,5 +1,6 @@
 "use client";
 
+import { UP_NEXT } from "@/lib/terms";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { isRememberable, landingTarget, rememberView } from "@/lib/landing";
@@ -9,7 +10,7 @@ import { AppShell } from "./app-shell";
 import { AboutView } from "./views/about-view";
 import { ChangelogView } from "./views/changelog-view";
 import { BrowseView } from "./views/browse-view";
-import { MyDayView } from "./views/my-day-view";
+import { UpNextView } from "./views/up-next-view";
 import { HistoryView } from "./views/history-view";
 import { SettingsView } from "./views/settings-view";
 import { HomeView } from "./views/home-view";
@@ -80,7 +81,7 @@ function Views({ releases }: { releases: Release[] }) {
         rename={search.get("rename") === "1"}
       />
     );
-  if (pathname === "/my-day") return <MyDayView />;
+  if (pathname === UP_NEXT.href) return <UpNextView />;
   if (pathname === "/settings") return <SettingsView />;
   if (pathname === "/about") return <AboutView />;
   if (pathname === "/changelog") return <ChangelogView releases={releases} />;

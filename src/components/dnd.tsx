@@ -1,5 +1,6 @@
 "use client";
 
+import { UP_NEXT } from "@/lib/terms";
 import {
   closestCenter,
   DndContext,
@@ -52,7 +53,7 @@ const collision: CollisionDetection = (args) => {
     const hit = pointerWithin({
       ...args,
       droppableContainers: args.droppableContainers.filter((c) =>
-        ["tag-drop", "myday-drop"].includes(c.data.current?.type),
+        ["tag-drop", "upnext-drop"].includes(c.data.current?.type),
       ),
     });
     return hit.length ? hit : closestCenter({ ...args, droppableContainers: only("item") });
@@ -75,7 +76,7 @@ export function useIsDesktop() {
 }
 
 export function AppDnd({ children }: { children: ReactNode }) {
-  const { snap, reorderTags, reorderItems, reorderMyDay, addTagToItem, addToMyDay, flash } = useData();
+  const { snap, reorderTags, reorderItems, reorderUpNext, addTagToItem, addToUpNext, flash } = useData();
   const [dragTitle, setDragTitle] = useState<string | null>(null);
   const sensors = useSensors(
     // Mouse: a few px of movement, so plain clicks still work.
@@ -111,8 +112,8 @@ export function AppDnd({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (a.type === "item" && o.type === "myday-drop") {
-      flash(addToMyDay(a.itemId) ? "Added to My Day" : "Already in My Day");
+    if (a.type === "item" && o.type === "upnext-drop") {
+      flash(addToUpNext(a.itemId) ? UP_NEXT.added : UP_NEXT.already);
       return;
     }
 
@@ -122,7 +123,7 @@ export function AppDnd({ children }: { children: ReactNode }) {
       const from = ordered.indexOf(a.itemId);
       const to = ordered.indexOf(o.itemId);
       if (from < 0 || to < 0) return;
-      if (a.area === "myday") reorderMyDay(arrayMove(ordered, from, to));
+      if (a.area === "upnext") reorderUpNext(arrayMove(ordered, from, to));
       else reorderItems(a.tagId, arrayMove(ordered, from, to));
     }
   }
@@ -268,14 +269,14 @@ export function SortableRow({
  * Sortable behaviour for an item row (`<li>`). `enabled: false` (drilled-down
  * views) gives a row with no drag affordance at all. Desktop drags by the row
  * body; phones by the grip. `area` is "items" (one list, `tagId` set) or
- * "myday" (the My Day page, no `tagId`).
+ * "upnext" (the Up Next page, no `tagId`).
  */
 export function useItemSortable(opts: {
   itemId: string;
   tagId: string;
   title: string;
   enabled: boolean;
-  area?: "items" | "myday";
+  area?: "items" | "upnext";
 }) {
   const { itemId, tagId, title, enabled, area = "items" } = opts;
   const desktop = useIsDesktop();
@@ -328,13 +329,13 @@ export function useTagDrop(key: string, tagId: string, enabled: boolean) {
   return { setNodeRef, over: target && isOver, target };
 }
 
-/** The My Day sidebar entry as a drop target for item drags (desktop only). */
-export function useMyDayDrop(key: string) {
+/** The Up Next sidebar entry as a drop target for item drags (desktop only). */
+export function useUpNextDrop(key: string) {
   const desktop = useIsDesktop();
   const { setNodeRef, isOver, active } = useDroppable({
     id: `drop:${key}`,
     disabled: !desktop,
-    data: { type: "myday-drop" },
+    data: { type: "upnext-drop" },
   });
   const target = desktop && active?.data.current?.type === "item";
   return { setNodeRef, over: target && isOver, target };

@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowDownToLine, Copy, CornerDownRight, Filter, GitFork, GripVertical, ListChecks, Mail, Sun, Tags } from "lucide-react";
+import { UP_NEXT } from "@/lib/terms";
+import { ArrowDownToLine, ChevronsRight, Copy, CornerDownRight, Filter, GitFork, GripVertical, ListChecks, Mail, Tags } from "lucide-react";
 import type { ReactNode } from "react";
 import { APP_NAME, APP_TAGLINE, APP_VERSION, CREDITS } from "@/lib/app-info";
 import { NavLink } from "../nav-link";
@@ -37,9 +38,9 @@ const HOW: { icon: ReactNode; title: string; text: string }[] = [
     text: "When a list has tasks that are also in other lists, a switch above the tasks hides those, so you see just what belongs to this list alone. It is remembered for each list on this device.",
   },
   {
-    icon: <Sun size={20} />,
-    title: "My Day",
-    text: "A hand-picked shortlist that brings your most important tasks to the front. Tap the sun on any task, drag it onto My Day in the sidebar, or use \"Plan my day\" to pick from all your lists. Tasks stay in their lists and in My Day until you remove or finish them; nothing resets. Drag them into your own order. In Settings you can choose which screen the app opens on.",
+    icon: <ChevronsRight size={20} />,
+    title: UP_NEXT.name,
+    text: UP_NEXT.aboutText,
   },
   {
     icon: <CornerDownRight size={20} />,

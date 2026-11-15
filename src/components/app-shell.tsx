@@ -1,7 +1,8 @@
 "use client";
 
+import { UP_NEXT } from "@/lib/terms";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, Menu, Sun } from "lucide-react";
+import { ChevronRight, ChevronsRight, Menu } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { APP_VERSION } from "@/lib/app-info";
@@ -9,14 +10,14 @@ import { cn } from "@/lib/utils";
 import {
   activeItems,
   browseHref,
-  myDayItems,
+  upNextItems,
   nodeKey,
   pathKeys,
   sidebarModel,
   sidebarPath,
   type TreeNode,
 } from "@/lib/tree";
-import { AppDnd, SortableLists, SortableRow, useMyDayDrop, useTagDrop } from "./dnd";
+import { AppDnd, SortableLists, SortableRow, useUpNextDrop, useTagDrop } from "./dnd";
 import { NewListButton } from "./list-forms";
 import { NavLink } from "./nav-link";
 import { useData } from "./store";
@@ -155,7 +156,7 @@ function Sidebar({
       </NavLink>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
-        <MyDayEntry area={area} />
+        <UpNextEntry area={area} />
         {roots.length === 0 && <p className="px-3 py-2 text-sm text-muted">No lists yet.</p>}
         <SortableLists area={area} ids={roots.map((r) => r.tag.id)}>
           {roots.map((node) => (
@@ -202,34 +203,34 @@ function Sidebar({
 }
 
 /** Pinned above the lists and outside the sortable order. On desktop it also accepts a dragged task. */
-function MyDayEntry({ area }: { area: "desk" | "drawer" }) {
+function UpNextEntry({ area }: { area: "desk" | "drawer" }) {
   const { snap } = useData();
   const pathname = usePathname();
-  const count = useMemo(() => myDayItems(snap).length, [snap]);
-  const selected = pathname === "/my-day";
-  const target = useMyDayDrop(`myday-${area}`);
+  const count = useMemo(() => upNextItems(snap).length, [snap]);
+  const selected = pathname === UP_NEXT.href;
+  const target = useUpNextDrop(`upnext-${area}`);
   return (
-    <div className="mb-3 border-b border-border pb-3">
+    // Idle it is just a row set apart by two separators; only when open does it fill with colour.
+    <div className="my-2 border-y border-border py-2">
       <div
         ref={target.setNodeRef}
         className={cn(
-          "relative overflow-hidden rounded-2xl border transition-shadow",
-          // Idle: a quiet warm-outlined card. Selected: filled with the sunrise gradient.
+          "rounded-xl transition-shadow",
           selected
-            ? "border-day bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] shadow-[var(--day-shadow)] ring-2 ring-day"
-            : "border-[var(--day-border)] bg-card hover:bg-day-soft",
+            ? "bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] shadow-[var(--day-shadow)] ring-2 ring-day"
+            : "hover:bg-day-soft",
           target.target && "ring-2 ring-day/50",
           target.over && "ring-4 ring-day",
         )}
       >
         <NavLink
-          href="/my-day"
+          href={UP_NEXT.href}
           aria-current={selected ? "page" : undefined}
-          className="flex min-w-0 items-center gap-3 px-4 py-4 text-day-ink"
+          className="flex min-w-0 items-center gap-3 px-3 py-3 text-[0.95rem]"
         >
-          <Sun size={26} className="shrink-0 fill-current text-day drop-shadow-[0_0_8px_var(--day)]" />
-          <span className="min-w-0 flex-1 truncate font-[family-name:var(--font-display)] text-lg font-bold tracking-tight">
-            My Day
+          <ChevronsRight size={20} strokeWidth={2.5} className="shrink-0 text-day" />
+          <span className={cn("min-w-0 flex-1 truncate", selected && "font-semibold text-day-ink")}>
+            {UP_NEXT.name}
           </span>
           {count > 0 && (
             <span className="rounded-full bg-day-soft px-2.5 py-0.5 text-sm font-semibold">{count}</span>

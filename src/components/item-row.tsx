@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Pencil, Sun, Trash2 } from "lucide-react";
+import { UP_NEXT } from "@/lib/terms";
+import { Check, ChevronsRight, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useItemSortable } from "./dnd";
 import { NavLink } from "./nav-link";
@@ -14,8 +15,8 @@ export type RowItem = {
   title: string;
   notes: string;
   tags: PickerTag[]; // active tags only
-  /** In My Day (a number) or not (null). */
-  myDayPosition: number | null;
+  /** In Up Next (a number) or not (null). */
+  upNextPosition: number | null;
 };
 
 export function ItemRow({
@@ -31,19 +32,19 @@ export function ItemRow({
   contextTagIds?: string[];
   /** Set in a single-list view: the row can be dragged to reorder within this list. */
   sortTagId?: string;
-  /** "myday": sortable in the My Day page (no list). Otherwise sortable per `sortTagId`. */
-  sortArea?: "myday";
+  /** "upnext": sortable in the Up Next page (no list). Otherwise sortable per `sortTagId`. */
+  sortArea?: "upnext";
 }) {
-  const day = sortArea === "myday";
+  const day = sortArea === "upnext";
   const data = useData();
   const sort = useItemSortable({
     itemId: item.id,
     tagId: sortTagId ?? "",
     title: item.title,
-    enabled: !!sortTagId || sortArea === "myday",
+    enabled: !!sortTagId || sortArea === "upnext",
     area: sortArea ?? "items",
   });
-  const inMyDay = item.myDayPosition !== null;
+  const inUpNext = item.upNextPosition !== null;
   const [editing, setEditing] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -114,19 +115,19 @@ export function ItemRow({
 
         <button
           type="button"
-          aria-label={inMyDay ? "Remove from My Day" : "Add to My Day"}
-          title={inMyDay ? "Remove from My Day" : "Add to My Day"}
-          aria-pressed={inMyDay}
-          onClick={() => (inMyDay ? data.removeFromMyDay(item.id) : data.addToMyDay(item.id))}
-          // Not in My Day: shown on hover/focus only (always visible where there is no hover, such as phones).
+          aria-label={inUpNext ? UP_NEXT.remove : UP_NEXT.add}
+          title={inUpNext ? UP_NEXT.remove : UP_NEXT.add}
+          aria-pressed={inUpNext}
+          onClick={() => (inUpNext ? data.removeFromUpNext(item.id) : data.addToUpNext(item.id))}
+          // Not in Up Next: shown on hover/focus only (always visible where there is no hover, such as phones).
           className={cn(
             "-mr-2 shrink-0 rounded-xl p-2.5 transition-opacity hover:bg-day-soft",
-            inMyDay
-              ? "text-day"
+            inUpNext
+              ? "bg-day-soft text-day"
               : "text-muted focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100",
           )}
         >
-          <Sun size={18} className={cn(inMyDay && "fill-current")} />
+          <ChevronsRight size={18} strokeWidth={inUpNext ? 3 : 2} />
         </button>
         <button
           type="button"

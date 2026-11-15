@@ -1,5 +1,5 @@
 {
-  "id": "be7dde8a-14af-4cad-b5a1-9e0651a5df32",
+  "id": "310c6971-7a13-4f4b-a439-566b726d3e79",
   "prevId": "6f036332-8b2f-4bda-80a3-b49a5d42de34",
   "version": "7",
   "dialect": "postgresql",
@@ -123,8 +123,8 @@
           "notNull": true,
           "default": "''"
         },
-        "my_day_position": {
-          "name": "my_day_position",
+        "up_next_position": {
+          "name": "up_next_position",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
