@@ -16,6 +16,8 @@ export type Item = {
   title: string;
   notes: string;
   createdAt: Date;
+  /** Up Next: null = not in it; a number is its manual order there (lower = higher up). */
+  upNextPosition: number | null;
 };
 export type Link = {
   itemId: string;
@@ -72,6 +74,13 @@ export function branchSuggestions(
       out.push({ tag: t, count: subTags.find((s) => s.tag.id === t.id)?.count ?? 0 });
     }
   return out.sort((a, b) => byPosition(a.tag, b.tag));
+}
+
+/** Up Next: the active items that were brought to the front, in their manual order. */
+export function upNextItems(snap: Snapshot): ItemView[] {
+  return activeItems(snap)
+    .filter((i) => i.upNextPosition !== null)
+    .sort((a, b) => a.upNextPosition! - b.upNextPosition!);
 }
 
 /** Items that still have at least one incomplete association, with those tags. */

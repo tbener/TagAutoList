@@ -1,7 +1,8 @@
 "use client";
 
+import { UP_NEXT } from "@/lib/terms";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, Menu } from "lucide-react";
+import { ChevronRight, ArrowUp, Menu } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { APP_VERSION } from "@/lib/app-info";
@@ -9,13 +10,14 @@ import { cn } from "@/lib/utils";
 import {
   activeItems,
   browseHref,
+  upNextItems,
   nodeKey,
   pathKeys,
   sidebarModel,
   sidebarPath,
   type TreeNode,
 } from "@/lib/tree";
-import { AppDnd, SortableLists, SortableRow, useTagDrop } from "./dnd";
+import { AppDnd, SortableLists, SortableRow, useUpNextDrop, useTagDrop } from "./dnd";
 import { NewListButton } from "./list-forms";
 import { NavLink } from "./nav-link";
 import { useData } from "./store";
@@ -154,6 +156,7 @@ function Sidebar({
       </NavLink>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
+        <UpNextEntry area={area} />
         {roots.length === 0 && <p className="px-3 py-2 text-sm text-muted">No lists yet.</p>}
         <SortableLists area={area} ids={roots.map((r) => r.tag.id)}>
           {roots.map((node) => (
@@ -194,6 +197,45 @@ function Sidebar({
             v{APP_VERSION}
           </NavLink>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Pinned above the lists and outside the sortable order. On desktop it also accepts a dragged task. */
+function UpNextEntry({ area }: { area: "desk" | "drawer" }) {
+  const { snap } = useData();
+  const pathname = usePathname();
+  const count = useMemo(() => upNextItems(snap).length, [snap]);
+  const selected = pathname === UP_NEXT.href;
+  const target = useUpNextDrop(`upnext-${area}`);
+  return (
+    // Idle it is just a row set apart by two separators; only when open does it fill with colour.
+    <div className="my-2 border-y border-border py-2">
+      <div
+        ref={target.setNodeRef}
+        className={cn(
+          "rounded-xl transition-shadow",
+          selected
+            ? "bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] shadow-[var(--day-shadow)] ring-2 ring-day"
+            : "hover:bg-day-soft",
+          target.target && "ring-2 ring-day/50",
+          target.over && "ring-4 ring-day",
+        )}
+      >
+        <NavLink
+          href={UP_NEXT.href}
+          aria-current={selected ? "page" : undefined}
+          className="flex min-w-0 items-center gap-3 px-3 py-3 text-[0.95rem]"
+        >
+          <ArrowUp size={20} strokeWidth={2.5} className="shrink-0 text-day" />
+          <span className={cn("min-w-0 flex-1 truncate", selected && "font-semibold text-day-ink")}>
+            {UP_NEXT.name}
+          </span>
+          {count > 0 && (
+            <span className="rounded-full bg-day-soft px-2.5 py-0.5 text-sm font-semibold">{count}</span>
+          )}
+        </NavLink>
       </div>
     </div>
   );

@@ -42,6 +42,10 @@ type Store = {
   /** A short neutral confirmation message. */
   toast: string | null;
   flash(message: string): void;
+  /** Up Next. `addToUpNext` returns false (and does nothing) when the task is already there. */
+  addToUpNext(itemId: string): boolean;
+  removeFromUpNext(itemId: string): void;
+  reorderUpNext(orderedItemIds: string[]): void;
   completeItem(id: string, tagIds: string[]): void;
   restoreCompletion(itemId: string, tagId: string): void;
 };
@@ -264,6 +268,24 @@ export function DataProvider({ initial, children }: { initial: Snapshot; childre
         if (!tagIds.length) return;
         commit(ops.removeItemFromTags(ref.current, id, tagIds));
         save(() => api.removeItemFromTags(id, tagIds));
+      },
+
+      addToUpNext(itemId) {
+        if (ops.inUpNext(ref.current, itemId) || !ref.current.items.some((i) => i.id === itemId)) return false;
+        commit(ops.addToUpNext(ref.current, itemId));
+        save(() => api.addToUpNext(itemId));
+        return true;
+      },
+
+      removeFromUpNext(itemId) {
+        if (!ops.inUpNext(ref.current, itemId)) return;
+        commit(ops.removeFromUpNext(ref.current, itemId));
+        save(() => api.removeFromUpNext(itemId));
+      },
+
+      reorderUpNext(orderedItemIds) {
+        commit(ops.reorderUpNext(ref.current, orderedItemIds));
+        save(() => api.reorderUpNext(orderedItemIds));
       },
 
       completeItem(id, tagIds) {

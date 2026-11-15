@@ -47,7 +47,7 @@ export function addItem(
   const s = withTags(snap, p.refs);
   return {
     ...s,
-    items: [...s.items, { id: p.id, title: p.title, notes: "", createdAt: p.now }],
+    items: [...s.items, { id: p.id, title: p.title, notes: "", createdAt: p.now, upNextPosition: null }],
     links: [
       ...s.links,
       ...p.refs.map((r) => ({
@@ -112,13 +112,64 @@ export function removeItemFromTags(snap: Snapshot, itemId: string, tagIds: strin
   return stillActive ? { ...snap, links } : deleteItem({ ...snap, links }, itemId);
 }
 
+/**
+ * Complete the item in the given lists. If that leaves it in no list at all
+ * it is fully done and leaves Up Next; if it is still active elsewhere it stays.
+ */
 export function completeItem(snap: Snapshot, itemId: string, tagIds: string[], now: Date): Snapshot {
   const ids = new Set(tagIds);
+  const links = snap.links.map((l) =>
+    l.itemId === itemId && ids.has(l.tagId) && !l.completedAt ? { ...l, completedAt: now } : l,
+  );
+  const done = !links.some((l) => l.itemId === itemId && !l.completedAt);
   return {
     ...snap,
-    links: snap.links.map((l) =>
-      l.itemId === itemId && ids.has(l.tagId) && !l.completedAt ? { ...l, completedAt: now } : l,
-    ),
+    links,
+    items: done
+      ? snap.items.map((i) => (i.id === itemId && i.upNextPosition !== null ? { ...i, upNextPosition: null } : i))
+      : snap.items,
+  };
+}
+
+export const inUpNext = (snap: Snapshot, itemId: string): boolean =>
+  snap.items.some((i) => i.id === itemId && i.upNextPosition !== null);
+
+/** Where a new Up Next task goes: above every existing one (mirrors `topLinkPosition`). */
+export function topUpNextPosition(items: Snapshot["items"]): number {
+  let min: number | null = null;
+  for (const i of items) if (i.upNextPosition !== null && (min === null || i.upNextPosition < min)) min = i.upNextPosition;
+  return min === null ? 0 : min - 1;
+}
+
+/** Bring a task to the top of Up Next. Unknown or already there: nothing changes (same snapshot). */
+export function addToUpNext(snap: Snapshot, itemId: string): Snapshot {
+  if (!snap.items.some((i) => i.id === itemId) || inUpNext(snap, itemId)) return snap;
+  const top = topUpNextPosition(snap.items);
+  return { ...snap, items: snap.items.map((i) => (i.id === itemId ? { ...i, upNextPosition: top } : i)) };
+}
+
+/** Take a task out of Up Next. It stays in its lists and is never completed. */
+export function removeFromUpNext(snap: Snapshot, itemId: string): Snapshot {
+  if (!inUpNext(snap, itemId)) return snap;
+  return { ...snap, items: snap.items.map((i) => (i.id === itemId ? { ...i, upNextPosition: null } : i)) };
+}
+
+/**
+ * Apply a new Up Next order. `orderedItemIds` is top to bottom; tasks in Up Next
+ * that aren't listed keep their relative order below. Tasks not in Up Next are ignored.
+ */
+export function reorderUpNext(snap: Snapshot, orderedItemIds: string[]): Snapshot {
+  const current = snap.items
+    .filter((i) => i.upNextPosition !== null)
+    .sort((a, b) => a.upNextPosition! - b.upNextPosition!)
+    .map((i) => i.id);
+  const known = new Set(current);
+  const first = [...new Set(orderedItemIds)].filter((id) => known.has(id));
+  const listed = new Set(first);
+  const index = new Map([...first, ...current.filter((id) => !listed.has(id))].map((id, i) => [id, i]));
+  return {
+    ...snap,
+    items: snap.items.map((i) => (index.has(i.id) ? { ...i, upNextPosition: index.get(i.id)! } : i)),
   };
 }
 
@@ -233,7 +284,13 @@ export function duplicateList(
     ...snap.items,
     ...order.map((id) => {
       const orig = itemById.get(id)!;
-      return { id: copyOf.get(id)!, title: orig.title, notes: orig.notes, createdAt: p.now };
+      return {
+        id: copyOf.get(id)!,
+        title: orig.title,
+        notes: orig.notes,
+        createdAt: p.now,
+        upNextPosition: null, // copies never start in Up Next
+      };
     }),
   ];
 

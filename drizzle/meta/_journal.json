@@ -36,6 +36,13 @@
       "when": 1794691174884,
       "tag": "0004_nested_lists",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794725425515,
+      "tag": "0005_up_next",
+      "breakpoints": true
     }
   ]
 }

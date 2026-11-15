@@ -1,7 +1,9 @@
 "use client";
 
+import { UP_NEXT } from "@/lib/terms";
+import { ArrowUp } from "lucide-react";
 import { useMemo } from "react";
-import { browseHref, tagsWithCounts } from "@/lib/tree";
+import { browseHref, upNextItems, tagsWithCounts } from "@/lib/tree";
 import { SortableLists, SortableRow } from "../dnd";
 import { NewListButton } from "../list-forms";
 import { NavLink } from "../nav-link";
@@ -10,6 +12,7 @@ import { useData } from "../store";
 export function HomeView() {
   const { snap } = useData();
   const rows = useMemo(() => tagsWithCounts(snap).filter((r) => !r.tag.parentId), [snap]);
+  const upNext = useMemo(() => upNextItems(snap).length, [snap]);
 
   return (
     <>
@@ -22,6 +25,19 @@ export function HomeView() {
 
       {/* Phone: the sidebar is a drawer, so the lists live here. */}
       <div className="space-y-6 md:hidden">
+        <NavLink
+          href={UP_NEXT.href}
+          className="flex items-center gap-3.5 rounded-3xl border border-[var(--day-border)] bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] px-5 py-5 text-day-ink shadow-[var(--day-shadow)] active:opacity-90"
+        >
+          <ArrowUp size={32} strokeWidth={2.5} className="shrink-0 text-day" />
+          <span className="min-w-0 flex-1 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight">
+            {UP_NEXT.name}
+          </span>
+          {upNext > 0 && (
+            <span className="rounded-full bg-day-soft px-3 py-0.5 text-base font-semibold">{upNext}</span>
+          )}
+        </NavLink>
+
         <h1 className="text-3xl font-bold tracking-tight text-accent">Lists</h1>
 
         {rows.length === 0 ? (

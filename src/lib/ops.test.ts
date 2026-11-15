@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as ops from "./ops";
-import { activeItems, browse, sortTags, tagsWithCounts, type Snapshot } from "./tree";
+import { activeItems, browse, upNextItems, sortTags, tagsWithCounts, type Snapshot } from "./tree";
 
 const now = new Date(2026, 5, 1);
 const empty = (): Snapshot => ({ tags: [], items: [], links: [] });
@@ -342,5 +342,69 @@ describe("nested lists", () => {
   it("new lists are always top level", () => {
     const s = ops.addTag(empty(), { id: "x", name: "X" });
     expect(s.tags[0].parentId).toBeNull();
+  });
+});
+
+describe("Up Next", () => {
+  const set = () => seeded(); // Chair (Shopping + Kid One), Table (Shopping)
+  const pos = (s: Snapshot, id: string) => s.items.find((i) => i.id === id)!.upNextPosition;
+
+  it("new items start outside Up Next", () => {
+    expect(pos(set(), "x")).toBeNull();
+  });
+
+  it("addToUpNext puts a task on top; adding twice changes nothing", () => {
+    let s = ops.addToUpNext(set(), "x");
+    s = ops.addToUpNext(s, "y");
+    expect(pos(s, "y")!).toBeLessThan(pos(s, "x")!);
+    expect(ops.addToUpNext(s, "y")).toBe(s);
+    expect(ops.addToUpNext(s, "nope")).toBe(s);
+  });
+
+  it("removeFromUpNext clears the flag but keeps the task and its lists", () => {
+    const s = ops.removeFromUpNext(ops.addToUpNext(set(), "x"), "x");
+    expect(pos(s, "x")).toBeNull();
+    expect(activeItems(s).find((i) => i.id === "x")!.tags).toHaveLength(2);
+    expect(ops.removeFromUpNext(s, "x")).toBe(s);
+  });
+
+  it("reorderUpNext applies the order; unlisted tasks keep their order below", () => {
+    let s = ops.addToUpNext(ops.addToUpNext(set(), "x"), "y"); // y, x
+    s = ops.reorderUpNext(s, ["x", "y"]);
+    expect(upNextItems(s).map((i) => i.id)).toEqual(["x", "y"]);
+    s = ops.reorderUpNext(s, ["y"]);
+    expect(upNextItems(s).map((i) => i.id)).toEqual(["y", "x"]);
+    expect(ops.reorderUpNext(s, ["nope"]).items.map((i) => i.upNextPosition)).toEqual(
+      s.items.map((i) => i.upNextPosition),
+    );
+  });
+
+  it("completing in only some lists keeps the task in Up Next", () => {
+    const s0 = ops.addToUpNext(set(), "x");
+    const s = ops.completeItem(s0, "x", [s0.tags[1].id], now);
+    expect(pos(s, "x")).not.toBeNull();
+    expect(upNextItems(s).map((i) => i.id)).toEqual(["x"]);
+  });
+
+  it("finishing a task completely removes it from Up Next", () => {
+    const s0 = ops.addToUpNext(set(), "x");
+    const s = ops.completeItem(s0, "x", s0.tags.map((t) => t.id), now);
+    expect(pos(s, "x")).toBeNull();
+    expect(upNextItems(s)).toEqual([]);
+  });
+
+  it("editing keeps the flag; copies of a list do not start in Up Next", () => {
+    const s0 = ops.addToUpNext(set(), "y");
+    const refs = s0.tags.slice(0, 1).map((t) => ({ id: t.id, name: t.name }));
+    expect(pos(ops.updateItem(s0, { id: "y", title: "T2", notes: "", refs }), "y")).not.toBeNull();
+    const dup = ops.duplicateList(s0, { tagId: s0.tags[0].id, newTagId: "c", idFor: (i) => `${i}-c`, now });
+    expect(pos(dup, "y-c")).toBeNull();
+    expect(pos(dup, "y")).not.toBeNull();
+  });
+
+  it("deleting a task or its only list removes it from Up Next", () => {
+    const s0 = ops.addToUpNext(set(), "y");
+    expect(upNextItems(ops.deleteItem(s0, "y"))).toEqual([]);
+    expect(upNextItems(ops.deleteTag(s0, s0.tags[0].id)).map((i) => i.id)).toEqual([]);
   });
 });

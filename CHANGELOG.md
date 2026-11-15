@@ -2,6 +2,14 @@
 
 All notable changes to TagAutoList, newest first. The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [0.1.10] — 2026-11-15
+
+### Added
+- A new Up Next shortlist: bring your most important tasks to the front from any list. Tasks stay there until you remove or finish them. Nothing resets overnight and nothing is added for you.
+- Add a task to Up Next with the up-arrow button on any task, by dragging it onto Up Next in the sidebar (desktop), or from "Plan Up Next", a picker that lists every list so you can tick the tasks to bring up. Up Next sits at the top of the sidebar, the menu and the phone Lists screen, and you can drag its tasks into your own order.
+- Finishing a task completely removes it from Up Next. Finishing it in only some of its lists keeps it there. Removing a task from Up Next never completes it.
+- In Settings, "Open the app on" lets you choose which screen the app starts on: Up Next (the default), the last view you were on, or Home. It is remembered on this device.
+
 ## [0.1.9] — 2026-11-14
 
 ### Added

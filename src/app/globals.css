@@ -84,6 +84,9 @@
   --color-cta: var(--cta);
   --color-cta-soft: var(--cta-soft);
   --color-cta-fg: var(--cta-fg);
+  --color-day: var(--day);
+  --color-day-soft: var(--day-soft);
+  --color-day-ink: var(--day-ink);
   --color-card-strong: var(--card-strong);
   --color-danger: var(--danger);
   --shadow-sm: var(--sh-sm);
@@ -219,4 +222,103 @@ h1, h2 {
 }
 @media (prefers-reduced-transparency: reduce) {
   .glass { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ---- Up Next: a warm sunrise family used only for Up Next ---- */
+:root {
+  --day: #e8731f;
+  --day-2: #f0457a;
+  --day-soft: rgb(240 130 50 / 0.13);
+  --day-ink: #a8480a;
+  --day-wash-a: rgb(255 190 90 / 0.55);
+  --day-wash-b: rgb(255 120 110 / 0.3);
+  --day-card: rgb(255 252 247 / 0.78);
+  --day-border: rgb(235 140 60 / 0.3);
+  --day-shadow: 0 1px 1px rgb(120 60 10 / 0.05), 0 18px 36px -16px rgb(230 110 40 / 0.38);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --day: #ffb25e;
+    --day-2: #ff7a8e;
+    --day-soft: rgb(255 170 90 / 0.15);
+    --day-ink: #ffc98f;
+    --day-wash-a: rgb(255 150 60 / 0.3);
+    --day-wash-b: rgb(255 90 120 / 0.18);
+    --day-card: rgb(255 240 225 / 0.07);
+    --day-border: rgb(255 170 100 / 0.26);
+    --day-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 22px 40px -16px rgb(0 0 0 / 0.75);
+  }
+}
+:root[data-theme="dark"] {
+  --day: #ffb25e;
+  --day-2: #ff7a8e;
+  --day-soft: rgb(255 170 90 / 0.15);
+  --day-ink: #ffc98f;
+  --day-wash-a: rgb(255 150 60 / 0.3);
+  --day-wash-b: rgb(255 90 120 / 0.18);
+  --day-card: rgb(255 240 225 / 0.07);
+  --day-border: rgb(255 170 100 / 0.26);
+  --day-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 22px 40px -16px rgb(0 0 0 / 0.75);
+}
+
+/* While the Up Next page is open the whole app background turns to dawn. */
+html[data-page="up-next"] {
+  --glow-a: rgb(255 170 80 / 0.42);
+  --glow-b: rgb(255 110 130 / 0.3);
+  --glow-c: rgb(255 200 120 / 0.28);
+}
+html[data-page="up-next"][data-theme="dark"] {
+  --glow-a: rgb(255 130 50 / 0.3);
+  --glow-b: rgb(255 70 110 / 0.22);
+  --glow-c: rgb(255 160 70 / 0.14);
+}
+@media (prefers-color-scheme: dark) {
+  html[data-page="up-next"]:not([data-theme="light"]) {
+    --glow-a: rgb(255 130 50 / 0.3);
+    --glow-b: rgb(255 70 110 / 0.22);
+    --glow-c: rgb(255 160 70 / 0.14);
+  }
+}
+
+/* The framed Up Next panel with its sun. */
+.day-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2rem;
+  border: 1.5px solid var(--day-border);
+  background:
+    radial-gradient(34rem 20rem at 100% -4%, var(--day-wash-a), transparent 66%),
+    radial-gradient(30rem 22rem at 0% 0%, var(--day-wash-b), transparent 70%),
+    var(--day-card);
+  box-shadow: var(--day-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+}
+.day-rings {
+  position: absolute;
+  right: -70px;
+  top: -90px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--day-wash-a), transparent 66%);
+  opacity: 0.5;
+}
+.day-rings::before,
+.day-rings::after {
+  content: "";
+  position: absolute;
+  inset: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--day-border);
+}
+.day-rings::after {
+  inset: 6px;
+  opacity: 0.55;
+}
+.bg-day {
+  background-image: linear-gradient(135deg, #ffc15c, #ff8a63);
+  color: #2a1200;
+  box-shadow: 0 8px 20px -8px #ff8a63;
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Pencil, Trash2 } from "lucide-react";
+import { UP_NEXT } from "@/lib/terms";
+import { Check, ArrowUp, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useItemSortable } from "./dnd";
 import { NavLink } from "./nav-link";
@@ -14,6 +15,8 @@ export type RowItem = {
   title: string;
   notes: string;
   tags: PickerTag[]; // active tags only
+  /** In Up Next (a number) or not (null). */
+  upNextPosition: number | null;
 };
 
 export function ItemRow({
@@ -21,6 +24,7 @@ export function ItemRow({
   allTags,
   contextTagIds = [],
   sortTagId,
+  sortArea,
 }: {
   item: RowItem;
   allTags: PickerTag[];
@@ -28,14 +32,19 @@ export function ItemRow({
   contextTagIds?: string[];
   /** Set in a single-list view: the row can be dragged to reorder within this list. */
   sortTagId?: string;
+  /** "upnext": sortable in the Up Next page (no list). Otherwise sortable per `sortTagId`. */
+  sortArea?: "upnext";
 }) {
+  const day = sortArea === "upnext";
   const data = useData();
   const sort = useItemSortable({
     itemId: item.id,
     tagId: sortTagId ?? "",
     title: item.title,
-    enabled: !!sortTagId,
+    enabled: !!sortTagId || sortArea === "upnext",
+    area: sortArea ?? "items",
   });
+  const inUpNext = item.upNextPosition !== null;
   const [editing, setEditing] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -59,7 +68,10 @@ export function ItemRow({
       <li
         {...sort?.rowProps}
         className={cn(
-          "rise group/row flex items-start gap-3.5 rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-lg",
+          "rise group/row flex items-start gap-3.5 border p-4 shadow-sm transition-shadow hover:shadow-lg",
+          day
+            ? "rounded-[1.4rem] border-[var(--day-border)] bg-[var(--day-card)] p-[1.15rem] shadow-[var(--day-shadow)] md:p-5"
+            : "rounded-2xl border-border bg-card",
           done && "is-done",
           sort?.desktop && "cursor-grab",
           sort?.isDragging && "opacity-40",
@@ -69,7 +81,12 @@ export function ItemRow({
           type="button"
           aria-label={`Complete ${item.title}`}
           onClick={onCheck}
-          className="check mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-cta hover:bg-cta-soft hover:text-cta active:scale-95"
+          className={cn(
+            "check mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 text-transparent transition-colors active:scale-95",
+            day
+              ? "border-day/70 hover:border-day hover:bg-day-soft hover:text-day"
+              : "border-muted/60 hover:border-cta hover:bg-cta-soft hover:text-cta",
+          )}
         >
           <Check size={16} strokeWidth={3} />
         </button>
@@ -96,6 +113,22 @@ export function ItemRow({
           </div>
         </div>
 
+        <button
+          type="button"
+          aria-label={inUpNext ? UP_NEXT.remove : UP_NEXT.add}
+          title={inUpNext ? UP_NEXT.remove : UP_NEXT.add}
+          aria-pressed={inUpNext}
+          onClick={() => (inUpNext ? data.removeFromUpNext(item.id) : data.addToUpNext(item.id))}
+          // Not in Up Next: shown on hover/focus only (always visible where there is no hover, such as phones).
+          className={cn(
+            "-mr-2 shrink-0 rounded-xl p-2.5 transition-opacity hover:bg-day-soft",
+            inUpNext
+              ? "bg-day-soft text-day"
+              : "text-muted focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100",
+          )}
+        >
+          <ArrowUp size={18} strokeWidth={inUpNext ? 3 : 2} />
+        </button>
         <button
           type="button"
           aria-label="Edit"
