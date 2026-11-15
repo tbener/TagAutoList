@@ -38,7 +38,7 @@ export function UpNextView() {
 
   return (
     <div className="day-frame -mx-1 p-5 md:mx-0 md:p-9">
-      <div aria-hidden className="day-sun" />
+      <div aria-hidden className="day-rings" />
       <div className="relative space-y-7">
       <header className="flex items-start justify-between gap-3">
         <div>

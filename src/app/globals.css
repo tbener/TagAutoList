@@ -294,7 +294,7 @@ html[data-page="up-next"][data-theme="dark"] {
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   backdrop-filter: blur(18px) saturate(160%);
 }
-.day-sun {
+.day-rings {
   position: absolute;
   right: -70px;
   top: -90px;
@@ -305,15 +305,15 @@ html[data-page="up-next"][data-theme="dark"] {
   background: radial-gradient(circle, var(--day-wash-a), transparent 66%);
   opacity: 0.5;
 }
-.day-sun::before,
-.day-sun::after {
+.day-rings::before,
+.day-rings::after {
   content: "";
   position: absolute;
   inset: 34px;
   border-radius: 50%;
   border: 1px solid var(--day-border);
 }
-.day-sun::after {
+.day-rings::after {
   inset: 6px;
   opacity: 0.55;
 }
