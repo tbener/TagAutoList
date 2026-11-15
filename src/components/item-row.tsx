@@ -34,6 +34,7 @@ export function ItemRow({
   /** "myday": sortable in the My Day page (no list). Otherwise sortable per `sortTagId`. */
   sortArea?: "myday";
 }) {
+  const day = sortArea === "myday";
   const data = useData();
   const sort = useItemSortable({
     itemId: item.id,
@@ -66,7 +67,10 @@ export function ItemRow({
       <li
         {...sort?.rowProps}
         className={cn(
-          "rise group/row flex items-start gap-3.5 rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-lg",
+          "rise group/row flex items-start gap-3.5 border p-4 shadow-sm transition-shadow hover:shadow-lg",
+          day
+            ? "rounded-[1.4rem] border-[var(--day-border)] bg-[var(--day-card)] p-[1.15rem] shadow-[var(--day-shadow)] md:p-5"
+            : "rounded-2xl border-border bg-card",
           done && "is-done",
           sort?.desktop && "cursor-grab",
           sort?.isDragging && "opacity-40",
@@ -76,7 +80,12 @@ export function ItemRow({
           type="button"
           aria-label={`Complete ${item.title}`}
           onClick={onCheck}
-          className="check mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 border-muted/60 text-transparent transition-colors hover:border-cta hover:bg-cta-soft hover:text-cta active:scale-95"
+          className={cn(
+            "check mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border-2 text-transparent transition-colors active:scale-95",
+            day
+              ? "border-day/70 hover:border-day hover:bg-day-soft hover:text-day"
+              : "border-muted/60 hover:border-cta hover:bg-cta-soft hover:text-cta",
+          )}
         >
           <Check size={16} strokeWidth={3} />
         </button>
@@ -109,9 +118,12 @@ export function ItemRow({
           title={inMyDay ? "Remove from My Day" : "Add to My Day"}
           aria-pressed={inMyDay}
           onClick={() => (inMyDay ? data.removeFromMyDay(item.id) : data.addToMyDay(item.id))}
+          // Not in My Day: shown on hover/focus only (always visible where there is no hover, such as phones).
           className={cn(
-            "-mr-2 shrink-0 rounded-xl p-2.5 hover:bg-accent-soft",
-            inMyDay ? "text-accent" : "text-muted",
+            "-mr-2 shrink-0 rounded-xl p-2.5 transition-opacity hover:bg-day-soft",
+            inMyDay
+              ? "text-day"
+              : "text-muted focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/row:opacity-100",
           )}
         >
           <Sun size={18} className={cn(inMyDay && "fill-current")} />

@@ -27,36 +27,50 @@ export function MyDayView() {
   const [planning, setPlanning] = useState(false);
   const today = useToday();
 
+  // Dawn background for the whole app while this page is open.
+  useEffect(() => {
+    document.documentElement.dataset.page = "my-day";
+    return () => {
+      delete document.documentElement.dataset.page;
+    };
+  }, []);
+
   return (
-    <>
+    <div className="day-frame -mx-1 p-5 md:mx-0 md:p-9">
+      <div aria-hidden className="day-sun" />
+      <div className="relative space-y-7">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-4xl font-bold leading-none tracking-tight md:text-5xl">
             {today ? today.toLocaleDateString(undefined, { weekday: "long" }) : "My Day"}
           </h1>
-          <p className="text-muted">
+          <p className="mt-1.5 font-[family-name:var(--font-display)] text-lg font-medium text-day-ink">
             {today ? today.toLocaleDateString(undefined, { day: "numeric", month: "long" }) : " "}
           </p>
         </div>
         {items.length > 0 && (
-          <Button variant="outline" onClick={() => setPlanning(true)}>
+          <Button
+            variant="outline"
+            className="border-[var(--day-border)] bg-[var(--day-card)] text-day-ink hover:bg-day-soft"
+            onClick={() => setPlanning(true)}
+          >
             <Sun size={16} /> Plan my day
           </Button>
         )}
       </header>
 
       {items.length === 0 ? (
-        <div className="rise rounded-3xl border border-dashed border-border bg-card/60 p-10 text-center">
-          <Sun size={28} className="mx-auto mb-3 text-muted" />
+        <div className="rise rounded-3xl border-2 border-dashed border-[var(--day-border)] p-10 text-center">
+          <Sun size={32} className="mx-auto mb-3 text-day" />
           <p className="font-semibold">Nothing in My Day yet.</p>
           <p className="mt-1 text-sm text-muted">Bring up what matters.</p>
-          <Button className="mt-4" onClick={() => setPlanning(true)}>
+          <Button className="bg-day mt-4" onClick={() => setPlanning(true)}>
             Plan my day
           </Button>
         </div>
       ) : (
         <SortableLists area="myday" ids={items.map((i) => i.id)}>
-          <ul className="space-y-3">
+          <ul className="space-y-3.5">
             {items.map((item) => (
               <ItemRow key={item.id} item={item} allTags={snap.tags} sortArea="myday" />
             ))}
@@ -65,6 +79,7 @@ export function MyDayView() {
       )}
 
       <PlanMyDay open={planning} onClose={() => setPlanning(false)} />
-    </>
+      </div>
+    </div>
   );
 }

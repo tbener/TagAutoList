@@ -209,24 +209,31 @@ function MyDayEntry({ area }: { area: "desk" | "drawer" }) {
   const selected = pathname === "/my-day";
   const target = useMyDayDrop(`myday-${area}`);
   return (
-    <div
-      ref={target.setNodeRef}
-      className={cn(
-        "mb-1 flex items-center rounded-xl hover:bg-accent-soft",
-        selected && "bg-accent-soft text-accent",
-        target.target && "ring-1 ring-accent/30",
-        target.over && "bg-cta-soft text-cta ring-2 ring-cta",
-      )}
-    >
-      <NavLink
-        href="/my-day"
-        aria-current={selected ? "page" : undefined}
-        className={cn("flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-[0.95rem]", selected && "font-semibold")}
+    <div className="mb-3 border-b border-border pb-3">
+      <div
+        ref={target.setNodeRef}
+        className={cn(
+          "relative overflow-hidden rounded-2xl border transition-shadow",
+          "border-[var(--day-border)] bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] shadow-[var(--day-shadow)]",
+          selected && "ring-2 ring-day",
+          target.target && "ring-2 ring-day/50",
+          target.over && "ring-4 ring-day",
+        )}
       >
-        <Sun size={18} className={cn(selected ? "fill-current" : "text-accent")} />
-        <span className="min-w-0 flex-1 truncate">My Day</span>
-        {count > 0 && <span className="text-xs text-muted">{count}</span>}
-      </NavLink>
+        <NavLink
+          href="/my-day"
+          aria-current={selected ? "page" : undefined}
+          className="flex min-w-0 items-center gap-3 px-4 py-4 text-day-ink"
+        >
+          <Sun size={26} className="shrink-0 fill-current text-day drop-shadow-[0_0_8px_var(--day)]" />
+          <span className="min-w-0 flex-1 truncate font-[family-name:var(--font-display)] text-lg font-bold tracking-tight">
+            My Day
+          </span>
+          {count > 0 && (
+            <span className="rounded-full bg-day-soft px-2.5 py-0.5 text-sm font-semibold">{count}</span>
+          )}
+        </NavLink>
+      </div>
     </div>
   );
 }

@@ -26,12 +26,14 @@ export function HomeView() {
       <div className="space-y-6 md:hidden">
         <NavLink
           href="/my-day"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm active:bg-accent-soft"
+          className="flex items-center gap-3.5 rounded-3xl border border-[var(--day-border)] bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] px-5 py-5 text-day-ink shadow-[var(--day-shadow)] active:opacity-90"
         >
-          <Sun size={22} className="shrink-0 text-accent" />
-          <span className="min-w-0 flex-1 text-[1.05rem] font-semibold">My Day</span>
+          <Sun size={30} className="shrink-0 fill-current text-day" />
+          <span className="min-w-0 flex-1 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight">
+            My Day
+          </span>
           {myDay > 0 && (
-            <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-sm font-medium text-accent">{myDay}</span>
+            <span className="rounded-full bg-day-soft px-3 py-0.5 text-base font-semibold">{myDay}</span>
           )}
         </NavLink>
 
