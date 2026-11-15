@@ -214,8 +214,10 @@ function MyDayEntry({ area }: { area: "desk" | "drawer" }) {
         ref={target.setNodeRef}
         className={cn(
           "relative overflow-hidden rounded-2xl border transition-shadow",
-          "border-[var(--day-border)] bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] shadow-[var(--day-shadow)]",
-          selected && "ring-2 ring-day",
+          // Idle: a quiet warm-outlined card. Selected: filled with the sunrise gradient.
+          selected
+            ? "border-day bg-[linear-gradient(135deg,var(--day-wash-a),var(--day-wash-b)),var(--day-card)] shadow-[var(--day-shadow)] ring-2 ring-day"
+            : "border-[var(--day-border)] bg-card hover:bg-day-soft",
           target.target && "ring-2 ring-day/50",
           target.over && "ring-4 ring-day",
         )}
